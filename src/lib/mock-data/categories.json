@@ -1,106 +1,301 @@
-
 [
-    { 
-        "id": "cat-1", "name": "Food & Drink", "icon": "CupSoda", "type": "expense", "color": "#FF6384",
-        "subcategories": [
-            { "id": "sub-1-1", "name": "Groceries", "icon": "ShoppingCart", "color": "#FF9F40" },
-            { "id": "sub-1-2", "name": "Restaurant", "icon": "Utensils", "color": "#FFCD56" },
-            { "id": "sub-1-3", "name": "Cafe", "icon": "Coffee", "color": "#4BC0C0" }
-        ]
-    },
-    { 
-        "id": "cat-2", "name": "Shopping", "icon": "ShoppingBag", "type": "expense", "color": "#36A2EB",
-        "subcategories": [
-            { "id": "sub-2-1", "name": "Clothing", "icon": "Shirt", "color": "#9966FF" },
-            { "id": "sub-2-2", "name": "Electronics", "icon": "Smartphone", "color": "#C9CBCF" },
-            { "id": "sub-2-3", "name": "Gifts", "icon": "Gift", "color": "#E7E9ED" }
-        ]
-    },
-    {
-        "id": "cat-3", "name": "Housing", "icon": "Home", "type": "expense", "color": "#F7464A",
-        "subcategories": [
-            { "id": "sub-3-1", "name": "Rent", "icon": "Key", "color": "#46BFBD" },
-            { "id": "sub-3-2", "name": "Utilities", "icon": "Bolt", "color": "#FDB45C" },
-            { "id": "sub-3-3", "name": "Maintenance", "icon": "Wrench", "color": "#949FB1" }
-        ]
-    },
-    {
-        "id": "cat-4", "name": "Transportation", "icon": "Car", "type": "expense", "color": "#5A6F8F",
-        "subcategories": [
-            { "id": "sub-4-1", "name": "Public Transport", "icon": "Train", "color": "#5AD3D1" },
-            { "id": "sub-4-2", "name": "Taxi", "icon": "CarFront", "color": "#FDB45C" }
-        ]
-    },
-    {
-        "id": "cat-5", "name": "Vehicle", "icon": "Car", "type": "expense", "color": "#FF9F40",
-        "subcategories": [
-            { "id": "sub-5-1", "name": "Fuel", "icon": "Fuel", "color": "#FFCD56" },
-            { "id": "sub-5-2", "name": "Insurance", "icon": "FileText", "color": "#4BC0C0" },
-            { "id": "sub-5-3", "name": "Service", "icon": "Wrench", "color": "#36A2EB" }
-        ]
-    },
-    {
-        "id": "cat-6", "name": "Life & Entertainment", "icon": "Ticket", "type": "expense", "color": "#9966FF",
-        "subcategories": [
-            { "id": "sub-6-1", "name": "Movies", "icon": "Film", "color": "#C9CBCF" },
-            { "id": "sub-6-2", "name": "Hobbies", "icon": "Paintbrush", "color": "#F7464A" },
-            { "id": "sub-6-3", "name": "Holidays", "icon": "Plane", "color": "#46BFBD" }
-        ]
-    },
-    {
-        "id": "cat-7", "name": "Communication, PC", "icon": "Computer", "type": "expense", "color": "#FDB45C",
-        "subcategories": [
-            { "id": "sub-7-1", "name": "Phone", "icon": "Smartphone", "color": "#949FB1" },
-            { "id": "sub-7-2", "name": "Internet", "icon": "Wifi", "color": "#5A6F8F" },
-            { "id": "sub-7-3", "name": "Software", "icon": "AppWindow", "color": "#5AD3D1" }
-        ]
-    },
-    {
-        "id": "cat-8", "name": "Financial Expenses", "icon": "Landmark", "type": "expense", "color": "#4BC0C0",
-        "subcategories": [
-            { "id": "sub-8-1", "name": "Taxes", "icon": "FileText", "color": "#36A2EB" },
-            { "id": "sub-8-2", "name": "Bank Fees", "icon": "Coins", "color": "#9966FF" },
-            { "id": "sub-8-3", "name": "Loans Repayment", "icon": "Handshake", "color": "#C9CBCF" }
-        ]
-    },
-    {
-        "id": "cat-9", "name": "Investment", "icon": "TrendingUp", "type": "expense", "color": "#E7E9ED",
-        "subcategories": [
-            { "id": "sub-9-1", "name": "Stocks", "icon": "LineChart", "color": "#F7464A" },
-            { "id": "sub-9-2", "name": "Real Estate", "icon": "Building", "color": "#46BFBD" }
-        ]
-    },
-    {
-        "id": "cat-10", "name": "Income", "icon": "Briefcase", "type": "income", "color": "#4CAF50", "isSystem": false,
-        "subcategories": [
-            { "id": "sub-10-1", "name": "Salary", "icon": "Briefcase", "color": "#81C784" },
-            { "id": "sub-10-2", "name": "Freelance", "icon": "Laptop", "color": "#A5D6A7" },
-            { "id": "sub-10-3", "name": "Bonus", "icon": "Award", "color": "#C8E6C9" }
-        ]
-    },
-    {
-        "id": "sys-other", "name": "Other", "icon": "Package", "type": "all", "color": "#BDBDBD", "isSystem": true, "defaultName": "Other", "defaultIcon": "Package",
-        "subcategories": []
-    },
-    {
-        "id": "sys-adjustment", "name": "Balance Adjustment", "icon": "Scale", "type": "all", "color": "#78909C", "isSystem": true, "defaultName": "Balance Adjustment", "defaultIcon": "Scale",
-        "subcategories": []
-    },
-    { 
-        "id": "sys-transfer", "name": "Transfer", "icon": "ArrowRightLeft", "type": "all", "color": "#607D8B", "isSystem": true, "defaultName": "Transfer", "defaultIcon": "ArrowRightLeft",
-        "subcategories": [] 
-    },
-    {
-        "id": "sys-initial", "name": "Initial Balance", "icon": "Banknote", "type": "income", "color": "#42A5F5", "isSystem": true, "defaultName": "Initial Balance", "defaultIcon": "Banknote",
-        "subcategories": []
-    },
-    {
-        "id": "sys-debt", "name": "Loan/Debt", "icon": "Landmark", "type": "all", "color": "#673AB7", "isSystem": true, "defaultName": "Loan/Debt", "defaultIcon": "Landmark",
-        "subcategories": [
-          { "id": "sub-sys-debt-1", "name": "Loan Given", "icon": "ArrowUpRight", "color": "#D1C4E9", "isSystem": true, "defaultName": "Loan Given", "defaultIcon": "ArrowUpRight" },
-          { "id": "sub-sys-debt-2", "name": "Debt Received", "icon": "ArrowDownLeft", "color": "#B39DDB", "isSystem": true, "defaultName": "Debt Received", "defaultIcon": "ArrowDownLeft" },
-          { "id": "sub-sys-debt-3", "name": "Debt Payment", "icon": "ArrowUpLeft", "color": "#9575CD", "isSystem": true, "defaultName": "Debt Payment", "defaultIcon": "ArrowUpLeft" },
-          { "id": "sub-sys-debt-4", "name": "Loan Payment", "icon": "ArrowDownRight", "color": "#7E57C2", "isSystem": true, "defaultName": "Loan Payment", "defaultIcon": "ArrowDownRight" }
-        ]
-    }
+  {
+    "id": "cat-1",
+    "name": "Food & Drink",
+    "icon": "CupSoda",
+    "type": "expense",
+    "color": "#FF6384",
+    "subcategories": [
+      {
+        "id": "sub-1-1",
+        "name": "Groceries",
+        "icon": "ShoppingCart",
+        "color": "#FF9F40"
+      },
+      {
+        "id": "sub-1-2",
+        "name": "Restaurant",
+        "icon": "Utensils",
+        "color": "#FFCD56"
+      },
+      {"id": "sub-1-3", "name": "Cafe", "icon": "Coffee", "color": "#4BC0C0"}
+    ]
+  },
+  {
+    "id": "cat-2",
+    "name": "Shopping",
+    "icon": "ShoppingBag",
+    "type": "expense",
+    "color": "#36A2EB",
+    "subcategories": [
+      {
+        "id": "sub-2-1",
+        "name": "Clothing",
+        "icon": "Shirt",
+        "color": "#9966FF"
+      },
+      {
+        "id": "sub-2-2",
+        "name": "Electronics",
+        "icon": "Smartphone",
+        "color": "#C9CBCF"
+      },
+      {"id": "sub-2-3", "name": "Gifts", "icon": "Gift", "color": "#E7E9ED"}
+    ]
+  },
+  {
+    "id": "cat-3",
+    "name": "Housing",
+    "icon": "Home",
+    "type": "expense",
+    "color": "#F7464A",
+    "subcategories": [
+      {"id": "sub-3-1", "name": "Rent", "icon": "Key", "color": "#46BFBD"},
+      {
+        "id": "sub-3-2",
+        "name": "Utilities",
+        "icon": "Bolt",
+        "color": "#FDB45C"
+      },
+      {
+        "id": "sub-3-3",
+        "name": "Maintenance",
+        "icon": "Wrench",
+        "color": "#949FB1"
+      }
+    ]
+  },
+  {
+    "id": "cat-4",
+    "name": "Transportation",
+    "icon": "Car",
+    "type": "expense",
+    "color": "#5A6F8F",
+    "subcategories": [
+      {
+        "id": "sub-4-1",
+        "name": "Public Transport",
+        "icon": "Train",
+        "color": "#5AD3D1"
+      },
+      {"id": "sub-4-2", "name": "Taxi", "icon": "CarFront", "color": "#FDB45C"}
+    ]
+  },
+  {
+    "id": "cat-5",
+    "name": "Vehicle",
+    "icon": "Car",
+    "type": "expense",
+    "color": "#FF9F40",
+    "subcategories": [
+      {"id": "sub-5-1", "name": "Fuel", "icon": "Fuel", "color": "#FFCD56"},
+      {
+        "id": "sub-5-2",
+        "name": "Insurance",
+        "icon": "FileText",
+        "color": "#4BC0C0"
+      },
+      {"id": "sub-5-3", "name": "Service", "icon": "Wrench", "color": "#36A2EB"}
+    ]
+  },
+  {
+    "id": "cat-6",
+    "name": "Life & Entertainment",
+    "icon": "Ticket",
+    "type": "expense",
+    "color": "#9966FF",
+    "subcategories": [
+      {"id": "sub-6-1", "name": "Movies", "icon": "Film", "color": "#C9CBCF"},
+      {
+        "id": "sub-6-2",
+        "name": "Hobbies",
+        "icon": "Paintbrush",
+        "color": "#F7464A"
+      },
+      {"id": "sub-6-3", "name": "Holidays", "icon": "Plane", "color": "#46BFBD"}
+    ]
+  },
+  {
+    "id": "cat-7",
+    "name": "Communication, PC",
+    "icon": "Computer",
+    "type": "expense",
+    "color": "#FDB45C",
+    "subcategories": [
+      {
+        "id": "sub-7-1",
+        "name": "Phone",
+        "icon": "Smartphone",
+        "color": "#949FB1"
+      },
+      {"id": "sub-7-2", "name": "Internet", "icon": "Wifi", "color": "#5A6F8F"},
+      {
+        "id": "sub-7-3",
+        "name": "Software",
+        "icon": "AppWindow",
+        "color": "#5AD3D1"
+      }
+    ]
+  },
+  {
+    "id": "cat-8",
+    "name": "Financial Expenses",
+    "icon": "Landmark",
+    "type": "expense",
+    "color": "#4BC0C0",
+    "subcategories": [
+      {
+        "id": "sub-8-1",
+        "name": "Taxes",
+        "icon": "FileText",
+        "color": "#36A2EB"
+      },
+      {
+        "id": "sub-8-2",
+        "name": "Bank Fees",
+        "icon": "Coins",
+        "color": "#9966FF"
+      },
+      {
+        "id": "sub-8-3",
+        "name": "Loans Repayment",
+        "icon": "Handshake",
+        "color": "#C9CBCF"
+      }
+    ]
+  },
+  {
+    "id": "cat-9",
+    "name": "Investment",
+    "icon": "TrendingUp",
+    "type": "expense",
+    "color": "#E7E9ED",
+    "subcategories": [
+      {
+        "id": "sub-9-1",
+        "name": "Stocks",
+        "icon": "LineChart",
+        "color": "#F7464A"
+      },
+      {
+        "id": "sub-9-2",
+        "name": "Real Estate",
+        "icon": "Building",
+        "color": "#46BFBD"
+      }
+    ]
+  },
+  {
+    "id": "cat-10",
+    "name": "Income",
+    "icon": "Briefcase",
+    "type": "income",
+    "color": "#4CAF50",
+    "isSystem": false,
+    "subcategories": [
+      {
+        "id": "sub-10-1",
+        "name": "Salary",
+        "icon": "Briefcase",
+        "color": "#81C784"
+      },
+      {
+        "id": "sub-10-2",
+        "name": "Freelance",
+        "icon": "Laptop",
+        "color": "#A5D6A7"
+      },
+      {"id": "sub-10-3", "name": "Bonus", "icon": "Award", "color": "#C8E6C9"}
+    ]
+  },
+  {
+    "id": "cat-11",
+    "name": "Other",
+    "icon": "Package",
+    "type": "all",
+    "color": "#BDBDBD",
+    "isSystem": false,
+    "subcategories": []
+  },
+  {
+    "id": "sys-adjustment",
+    "name": "Balance Adjustment",
+    "icon": "Scale",
+    "type": "all",
+    "color": "#78909C",
+    "isSystem": true,
+    "defaultName": "Balance Adjustment",
+    "defaultIcon": "Scale",
+    "subcategories": []
+  },
+  {
+    "id": "sys-transfer",
+    "name": "Transfer",
+    "icon": "ArrowRightLeft",
+    "type": "all",
+    "color": "#607D8B",
+    "isSystem": true,
+    "defaultName": "Transfer",
+    "defaultIcon": "ArrowRightLeft",
+    "subcategories": []
+  },
+  {
+    "id": "sys-initial",
+    "name": "Initial Balance",
+    "icon": "Banknote",
+    "type": "income",
+    "color": "#42A5F5",
+    "isSystem": true,
+    "defaultName": "Initial Balance",
+    "defaultIcon": "Banknote",
+    "subcategories": []
+  },
+  {
+    "id": "sys-debt",
+    "name": "Loan/Debt",
+    "icon": "Landmark",
+    "type": "all",
+    "color": "#673AB7",
+    "isSystem": true,
+    "defaultName": "Loan/Debt",
+    "defaultIcon": "Landmark",
+    "subcategories": [
+      {
+        "id": "sub-sys-debt-1",
+        "name": "Loan Given",
+        "icon": "ArrowUpRight",
+        "color": "#D1C4E9",
+        "isSystem": true,
+        "defaultName": "Loan Given",
+        "defaultIcon": "ArrowUpRight"
+      },
+      {
+        "id": "sub-sys-debt-2",
+        "name": "Debt Received",
+        "icon": "ArrowDownLeft",
+        "color": "#B39DDB",
+        "isSystem": true,
+        "defaultName": "Debt Received",
+        "defaultIcon": "ArrowDownLeft"
+      },
+      {
+        "id": "sub-sys-debt-3",
+        "name": "Debt Payment",
+        "icon": "ArrowUpLeft",
+        "color": "#9575CD",
+        "isSystem": true,
+        "defaultName": "Debt Payment",
+        "defaultIcon": "ArrowUpLeft"
+      },
+      {
+        "id": "sub-sys-debt-4",
+        "name": "Loan Payment",
+        "icon": "ArrowDownRight",
+        "color": "#7E57C2",
+        "isSystem": true,
+        "defaultName": "Loan Payment",
+        "defaultIcon": "ArrowDownRight"
+      }
+    ]
+  }
 ]
