@@ -1,0 +1,20 @@
+
+{
+  "user": null,
+  "currency": "IDR",
+  "language": "en",
+  "timeFormat": "12h",
+  "hideAmounts": false,
+  "numberFormat": "IDR",
+  "decimalPlaces": 0,
+  "toastDuration": 1000,
+  "dashboardCardOrder": [
+    "totalBalance",
+    "income",
+    "expenses",
+    "netIncome",
+    "incomeExpenseChart",
+    "expenseDistributionChart",
+    "recentTransactions"
+  ]
+}

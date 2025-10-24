@@ -1,0 +1,6 @@
+
+[
+  { "id": "wt1", "name": "Bank", "icon": "Landmark" },
+  { "id": "wt2", "name": "Cash", "icon": "Wallet" },
+  { "id": "wt3", "name": "E-Wallet", "icon": "CreditCard" }
+]
