@@ -84,26 +84,33 @@ export default function LandingPage() {
     return (
         <div className="flex flex-col min-h-screen bg-background">
             <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur-sm">
-                <div className="container flex h-16 items-center px-4 md:px-6">
+                <div className="container flex h-16 items-center justify-between px-4 md:px-6">
+                    {/* Kiri: Logo */}
                     <Link
                         href="#"
-                        className="flex items-center justify-center gap-2 font-semibold"
+                        className="flex items-center gap-2 font-semibold md:pl-20"
                     >
                         <Logo className="h-6 w-6 text-primary" />
                         <span className="font-headline text-lg">
                             CoinKeeper
                         </span>
                     </Link>
-                    <nav className="ml-auto flex gap-4 sm:gap-6">
+
+                    {/* Kanan: Theme Toggle + Open App */}
+                    <div className="flex items-center gap-3">
+                        <div className="hidden lg:block">
+                            <ThemeToggle />
+                        </div>
                         <Button asChild>
                             <Link href="/dashboard" onClick={handleOpenApp}>
-                                {t("open_app")}{" "}
+                                {t("open_app")}
                                 <ArrowRight className="ml-2 h-4 w-4" />
                             </Link>
                         </Button>
-                    </nav>
+                    </div>
                 </div>
             </header>
+
             <main className="flex-1">
                 <section className="w-full pt-12 md:pt-20 lg:pt-28 pb-12 md:pb-24 lg:pb-16 border-b">
                     <div className="container px-4 md:px-6">
@@ -116,7 +123,7 @@ export default function LandingPage() {
                                     <p className="mx-auto max-w-[700px] text-muted-foreground md:text-xl/relaxed">
                                         {t("landing_subtitle")}
                                     </p>
-                                    <div className="flex flex-col gap-2">
+                                    <div className="flex flex-col gap-2 min-[400px]:flex-row justify-center lg:justify-start">
                                         <Button asChild size="lg">
                                             <Link
                                                 href="/dashboard"
