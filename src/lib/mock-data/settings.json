@@ -1,4 +1,3 @@
-
 {
   "user": null,
   "currency": "IDR",
@@ -15,6 +14,8 @@
     "netIncome",
     "incomeExpenseChart",
     "expenseDistributionChart",
+    "budgetOverview",
+    "debtLoanOverview",
     "recentTransactions"
   ]
 }

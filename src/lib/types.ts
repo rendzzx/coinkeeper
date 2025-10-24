@@ -186,9 +186,9 @@ export type DashboardCardKey =
   | "netIncome"
   | "incomeExpenseChart"
   | "expenseDistributionChart"
-  | "recentTransactions"
   | "budgetOverview"
-  | "debtLoanOverview";
+  | "debtLoanOverview"
+  | "recentTransactions";
 
 export type DashboardCardSetting = {
   id: DashboardCardKey;
