@@ -363,6 +363,7 @@
   "egBank": "e.g., Bank",
   "budgetOverviewWidgetTitle": "Budget Overview",
   "dashboard_debtLoanOverview_label": "Debts & Loans",
+  "dashboard_budgetOverview_label": "Budget Overview",
   "noActiveDebtsOrLoans": "No active debts or loans.",
   "activeDebtsAndLoans": "Summary of your active debts and loans.",
   "totalYouOwe": "Total You Owe",

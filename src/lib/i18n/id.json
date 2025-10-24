@@ -363,6 +363,7 @@
   "egBank": "cth., Bank",
   "budgetOverviewWidgetTitle": "Ringkasan Anggaran",
   "dashboard_debtLoanOverview_label": "Utang & Pinjaman",
+  "dashboard_budgetOverview_label": "Ringkasan Anggaran",
   "noActiveDebtsOrLoans": "Tidak ada utang atau pinjaman aktif.",
   "activeDebtsAndLoans": "Ringkasan utang dan pinjaman aktif Anda.",
   "totalYouOwe": "Total Utang Anda",
