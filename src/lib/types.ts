@@ -1,36 +1,52 @@
-
-
 export interface HistoryLog {
-  id: string;                   // uuid
-  timestamp: string;            // ISO string
-  action: 'create'|'update'|'delete'|'system'|'notification'|'sync'|'restore';
-  entity: 'wallet'|'transaction'|'scheduled'|'debt'|'budget'|'settings'|'category'|'tag'|'walletType'|'other';
-  entityId?: string | null;     // id entitas (jika relevan)
-  description?: string;         // ringkasan human readable
-  userId?: string | null;       // optional (future BYOC multi-user)
-  context?: {                   // optional, metadata
+  id: string; // uuid
+  timestamp: string; // ISO string
+  action:
+    | "create"
+    | "update"
+    | "delete"
+    | "system"
+    | "notification"
+    | "sync"
+    | "restore";
+  entity:
+    | "wallet"
+    | "transaction"
+    | "scheduled"
+    | "debt"
+    | "budget"
+    | "settings"
+    | "category"
+    | "tag"
+    | "walletType"
+    | "other";
+  entityId?: string | null; // id entitas (jika relevan)
+  description?: string; // ringkasan human readable
+  userId?: string | null; // optional (future BYOC multi-user)
+  context?: {
+    // optional, metadata
     walletId?: string | null;
     categoryId?: string | null;
     amount?: number | null;
-    type?: string | null;       // income/expense/transfer/...
-    source?: 'manual'|'scheduled'|'system'|'import'|'sync';
+    type?: string | null; // income/expense/transfer/...
+    source?: "manual" | "scheduled" | "system" | "import" | "sync";
     device?: string | null;
   };
-  oldValue?: any | null;        // JSON serializable
-  newValue?: any | null;        // JSON serializable
-  changes?: Record<string, { old: any; new: any }> | null;
-  status?: 'success'|'failed'|'pending';
-  version?: string;             // schema/app version
-  restoreId?: string | null;    // when moved to restore bin (for undo)
+  oldValue?: any | null; // JSON serializable
+  newValue?: any | null; // JSON serializable
+  changes?: Record<string, {old: any; new: any}> | null;
+  status?: "success" | "failed" | "pending";
+  version?: string; // schema/app version
+  restoreId?: string | null; // when moved to restore bin (for undo)
 }
 
 export type RestoreBinItem = {
-    id: string; // uuid for the bin entry itself
-    entity: HistoryLog['entity'];
-    entityId: string;
-    payload: any; // the full object that was deleted
-    deletedAt: string; // ISO string
-    originActionId?: string; // Optional: ID of the history log that triggered the deletion
+  id: string; // uuid for the bin entry itself
+  entity: HistoryLog["entity"];
+  entityId: string;
+  payload: any; // the full object that was deleted
+  deletedAt: string; // ISO string
+  originActionId?: string; // Optional: ID of the history log that triggered the deletion
 };
 
 export type Attachment = {
@@ -54,7 +70,7 @@ export type Wallet = {
   color?: string;
 };
 
-export type TransactionType = 'income' | 'expense';
+export type TransactionType = "income" | "expense";
 
 export type Transaction = {
   id: string;
@@ -79,23 +95,23 @@ export type ScheduledTransaction = {
   categoryId: string;
   startDate: string; // ISO string
   time: string; // HH:mm:ss
-  frequency: 'once' | 'daily' | 'weekly' | 'monthly' | 'yearly';
+  frequency: "once" | "daily" | "weekly" | "monthly" | "yearly";
   endDate?: string | null; // ISO string
   nextDueDate: string; // ISO string
   lastRun: string | null; // ISO string of the last time it successfully ran
-  status: 'active' | 'completed';
+  status: "active" | "completed";
   locked?: boolean;
   notes?: string;
   tags: string[];
 };
 
 export type TransferPayload = {
-    fromWalletId: string;
-    toWalletId: string;
-    amount: number;
-    date: string; // ISO string
-    notes?: string;
-    tags?: string[];
+  fromWalletId: string;
+  toWalletId: string;
+  amount: number;
+  date: string; // ISO string
+  notes?: string;
+  tags?: string[];
 };
 
 export type SubCategory = {
@@ -112,7 +128,7 @@ export type Category = {
   id: string;
   name: string;
   icon: string; // lucide icon name
-  type: 'income' | 'expense' | 'all';
+  type: "income" | "expense" | "all";
   color?: string;
   subcategories: SubCategory[];
   isSystem?: boolean;
@@ -121,7 +137,7 @@ export type Category = {
 };
 
 export type Tag = {
-  id:string;
+  id: string;
   name: string;
   color?: string;
 };
@@ -132,21 +148,21 @@ export type Budget = {
   categoryIds: string[];
   tags: string[];
   amount: number;
-  type: 'periodic' | 'one-time';
+  type: "periodic" | "one-time";
   startDate?: string; // ISO String for one-time budgets
-  endDate?: string;   // ISO String for one-time budgets
+  endDate?: string; // ISO String for one-time budgets
   enableNotifications?: boolean;
 };
 
 export type Debt = {
   id: string;
   person: string;
-  type: 'debt' | 'loan'; // 'debt' = I owe, 'loan' = I am owed
+  type: "debt" | "loan"; // 'debt' = I owe, 'loan' = I am owed
   initialAmount: number;
   paidAmount: number;
   startDate: string; // ISO string
   dueDate: string | null;
-  status: 'active' | 'paid';
+  status: "active" | "paid";
   walletId?: string; // Wallet where the initial amount was received/given
   sourceTransactionId?: string; // The transaction created when the debt/loan was created
   linkedTransactionIds: string[];
@@ -157,35 +173,43 @@ export type Debt = {
 };
 
 export type NavItem = {
-    id: string;
-    href: string;
-    label: string;
-    icon: string;
+  id: string;
+  href: string;
+  label: string;
+  icon: string;
 };
 
-export type DashboardCardKey = 'totalBalance' | 'income' | 'expenses' | 'netIncome' | 'incomeExpenseChart' | 'expenseDistributionChart' | 'recentTransactions';
+export type DashboardCardKey =
+  | "totalBalance"
+  | "income"
+  | "expenses"
+  | "netIncome"
+  | "incomeExpenseChart"
+  | "expenseDistributionChart"
+  | "recentTransactions"
+  | "budgetOverview";
 
 export type DashboardCardSetting = {
   id: DashboardCardKey;
   label: string;
-}
+};
 
 export type User = {
-    id: string;
-    createdAt: string; // ISO string
+  id: string;
+  createdAt: string; // ISO string
 };
 
 export type AppSettings = {
   user?: User | null;
-  currency: 'USD' | 'IDR' | 'EUR';
-  language: 'en' | 'id';
-  theme: 'light' | 'dark' | 'system';
-  timeFormat: '12h' | '24h';
+  currency: "USD" | "IDR" | "EUR";
+  language: "en" | "id";
+  theme: "light" | "dark" | "system";
+  timeFormat: "12h" | "24h";
   hideAmounts: boolean;
   navItemOrder: string[];
   dashboardCardOrder: DashboardCardKey[];
   dashboardCardVisibility: Record<DashboardCardKey, boolean>;
-  numberFormat: 'IDR' | 'USD';
+  numberFormat: "IDR" | "USD";
   decimalPlaces: number;
   devMode: boolean;
   toastDuration: number;
@@ -206,31 +230,46 @@ export type AppState = {
 };
 
 export type AppContextValue = {
-    state: Omit<AppState, 'settings' | 'wallets' | 'walletTypes' | 'transactions'>;
-    dispatch: (action: Action) => void;
-    isPageTransitioning: boolean;
-    setIsPageTransitioning: React.Dispatch<React.SetStateAction<boolean>>;
-    pageTitle: string;
-    setPageTitle: React.Dispatch<React.SetStateAction<string>>;
+  state: Omit<
+    AppState,
+    "settings" | "wallets" | "walletTypes" | "transactions"
+  >;
+  dispatch: (action: Action) => void;
+  isPageTransitioning: boolean;
+  setIsPageTransitioning: React.Dispatch<React.SetStateAction<boolean>>;
+  pageTitle: string;
+  setPageTitle: React.Dispatch<React.SetStateAction<string>>;
 };
 
 export type Action =
-  | { type: 'SET_STATE'; payload: AppState }
-  | { type: 'ADD_BUDGET'; payload: Budget }
-  | { type: 'UPDATE_BUDGET'; payload: Budget }
-  | { type: 'DELETE_BUDGET'; payload: string }
-  | { type: 'ADD_CATEGORY'; payload: Category }
-  | { type: 'UPDATE_CATEGORY'; payload: Category }
-  | { type: 'DELETE_CATEGORY'; payload: string }
-  | { type: 'ADD_SUBCATEGORY', payload: { parentCategoryId: string; subCategory: SubCategory } }
-  | { type: 'UPDATE_SUBCATEGORY', payload: { parentCategoryId: string; subCategory: SubCategory } }
-  | { type: 'DELETE_SUBCATEGORY', payload: { parentCategoryId: string; subCategoryId: string } }
-  | { type: 'ADD_TAG'; payload: Tag }
-  | { type: 'UPDATE_TAG'; payload: Tag }
-  | { type: 'DELETE_TAG'; payload: string }
-  | { type: 'ADD_DEBT'; payload: Debt }
-  | { type: 'UPDATE_DEBT'; payload: Debt }
-  | { type: 'DELETE_DEBT'; payload: string }
-  | { type: 'ADD_DEBT_PAYMENT'; payload: { debtId: string; transaction: Transaction } }
-  | { type: 'RESTORE_FROM_BIN'; payload: string }
-  | { type: 'PERMANENT_DELETE_FROM_BIN'; payload: string };
+  | {type: "SET_STATE"; payload: AppState}
+  | {type: "ADD_BUDGET"; payload: Budget}
+  | {type: "UPDATE_BUDGET"; payload: Budget}
+  | {type: "DELETE_BUDGET"; payload: string}
+  | {type: "ADD_CATEGORY"; payload: Category}
+  | {type: "UPDATE_CATEGORY"; payload: Category}
+  | {type: "DELETE_CATEGORY"; payload: string}
+  | {
+      type: "ADD_SUBCATEGORY";
+      payload: {parentCategoryId: string; subCategory: SubCategory};
+    }
+  | {
+      type: "UPDATE_SUBCATEGORY";
+      payload: {parentCategoryId: string; subCategory: SubCategory};
+    }
+  | {
+      type: "DELETE_SUBCATEGORY";
+      payload: {parentCategoryId: string; subCategoryId: string};
+    }
+  | {type: "ADD_TAG"; payload: Tag}
+  | {type: "UPDATE_TAG"; payload: Tag}
+  | {type: "DELETE_TAG"; payload: string}
+  | {type: "ADD_DEBT"; payload: Debt}
+  | {type: "UPDATE_DEBT"; payload: Debt}
+  | {type: "DELETE_DEBT"; payload: string}
+  | {
+      type: "ADD_DEBT_PAYMENT";
+      payload: {debtId: string; transaction: Transaction};
+    }
+  | {type: "RESTORE_FROM_BIN"; payload: string}
+  | {type: "PERMANENT_DELETE_FROM_BIN"; payload: string};
