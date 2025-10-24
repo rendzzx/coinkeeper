@@ -35,7 +35,7 @@ export const ALL_DASHBOARD_CARDS: DashboardCardSetting[] = [
     id: "expenseDistributionChart",
     label: "dashboard_expenseDistributionChart_label",
   },
-  {id: "recentTransactions", label: "dashboard_recentTransactions_label"},
   {id: "budgetOverview", label: "dashboard_budgetOverview_label"},
   {id: "debtLoanOverview", label: "dashboard_debtLoanOverview_label"},
+  {id: "recentTransactions", label: "dashboard_recentTransactions_label"},
 ];
