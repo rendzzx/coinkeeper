@@ -1,0 +1,10 @@
+{
+  "placeholderImages": [
+    {
+      "id": "logo",
+      "description": "CoinKeeper App Logo",
+      "imageUrl": "https://picsum.photos/seed/logo/64/64",
+      "imageHint": "logo abstract"
+    }
+  ]
+}
