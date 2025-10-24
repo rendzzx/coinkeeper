@@ -361,5 +361,10 @@
   "toastDebtDeleted": "Utang/Pinjaman Dihapus",
   "toastDebtDeletedDesc": "Catatan untuk {{person}} telah dipindahkan ke riwayat.",
   "egBank": "cth., Bank",
-  "budgetOverviewWidgetTitle": "Ringkasan Anggaran"
+  "budgetOverviewWidgetTitle": "Ringkasan Anggaran",
+  "dashboard_debtLoanOverview_label": "Utang & Pinjaman",
+  "noActiveDebtsOrLoans": "Tidak ada utang atau pinjaman aktif.",
+  "activeDebtsAndLoans": "Ringkasan utang dan pinjaman aktif Anda.",
+  "totalYouOwe": "Total Utang Anda",
+  "totalOwedToYou": "Total Piutang Anda"
 }

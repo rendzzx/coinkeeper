@@ -361,5 +361,10 @@
   "toastDebtDeleted": "Debt/Loan Deleted",
   "toastDebtDeletedDesc": "The record for {{person}} has been moved to history.",
   "egBank": "e.g., Bank",
-  "budgetOverviewWidgetTitle": "Budget Overview"
+  "budgetOverviewWidgetTitle": "Budget Overview",
+  "dashboard_debtLoanOverview_label": "Debts & Loans",
+  "noActiveDebtsOrLoans": "No active debts or loans.",
+  "activeDebtsAndLoans": "Summary of your active debts and loans.",
+  "totalYouOwe": "Total You Owe",
+  "totalOwedToYou": "Total Owed To You"
 }

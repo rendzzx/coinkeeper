@@ -39,6 +39,7 @@ import {SortableCard} from "@/components/dashboard/SortableCard";
 import type {DashboardCardKey} from "@/lib/types";
 import {ALL_DASHBOARD_CARDS} from "@/lib/config-data";
 import {BudgetOverview} from "@/components/dashboard/BudgetOverview";
+import {DebtLoanOverview} from "@/components/dashboard/DebtLoanOverview";
 
 export default function DashboardPage() {
   const {transactions} = useTransaction();
@@ -172,6 +173,8 @@ export default function DashboardPage() {
         return <RecentTransactions />;
       case "budgetOverview":
         return <BudgetOverview />;
+      case "debtLoanOverview":
+        return <DebtLoanOverview />;
       default:
         return null;
     }
@@ -186,7 +189,9 @@ export default function DashboardPage() {
       case "recentTransactions":
         return "lg:col-span-8";
       case "budgetOverview":
-        return "lg:col-span-8";
+        return "lg:col-span-4";
+      case "debtLoanOverview":
+        return "lg:col-span-4";
       case "totalBalance":
       case "income":
       case "expenses":

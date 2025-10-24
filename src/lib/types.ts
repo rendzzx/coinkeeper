@@ -187,7 +187,8 @@ export type DashboardCardKey =
   | "incomeExpenseChart"
   | "expenseDistributionChart"
   | "recentTransactions"
-  | "budgetOverview";
+  | "budgetOverview"
+  | "debtLoanOverview";
 
 export type DashboardCardSetting = {
   id: DashboardCardKey;
