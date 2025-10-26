@@ -64,12 +64,15 @@ import {cn} from '@/lib/utils';
 import {db} from '@/lib/db';
 import {PasswordManager} from './PasswordManager';
 
-const createExportPasswordSchema = (shouldEncrypt: boolean) =>
+const createExportPasswordSchema = (
+  shouldEncrypt: boolean,
+  t: (key: any) => string
+) =>
   z.object({
     password: z
       .string()
       .refine((val) => !shouldEncrypt || (val && val.length > 0), {
-        message: 'Password cannot be empty for encryption.',
+        message: t('toastPasswordRequired'),
       }),
   });
 
@@ -117,7 +120,7 @@ export function DataManagement({
 
   const isMasterPasswordSet = !!settings.user?.passwordHash;
 
-  const exportPasswordSchema = createExportPasswordSchema(shouldEncrypt);
+  const exportPasswordSchema = createExportPasswordSchema(shouldEncrypt, t);
 
   const exportForm = useForm<ExportPasswordFormValues>({
     resolver: zodResolver(exportPasswordSchema),
@@ -136,40 +139,38 @@ export function DataManagement({
       let fileName: string;
       let fileType: string;
 
+      // Always require master password for encrypted export if it's set
+      if (shouldEncrypt && settings.user?.passwordHash) {
+        const isVerified = await verifyPassword(
+          data.password || '',
+          settings.user.passwordHash
+        );
+        if (!isVerified) {
+          exportForm.setError('password', {
+            type: 'manual',
+            message: t('incorrectPassword'),
+          });
+          setIsLoading(false);
+          return;
+        }
+      }
+
       if (shouldEncrypt) {
         const password = data.password;
         if (!password) {
-          // This check is now mainly for type safety, Zod handles it.
           toast({
-            title: 'Encryption Error',
-            description: 'A password is required for encryption.',
+            title: t('toastEncryptionError'),
+            description: t('toastPasswordRequired'),
             variant: 'destructive',
           });
           setIsLoading(false);
           return;
         }
 
-        // Verify password if master password is set
-        if (settings.user?.passwordHash) {
-          const isVerified = await verifyPassword(
-            password,
-            settings.user.passwordHash
-          );
-          if (!isVerified) {
-            exportForm.setError('password', {
-              type: 'manual',
-              message: t('incorrectPassword'),
-            });
-            setIsLoading(false);
-            return;
-          }
-        }
-
         fileContent = await encryptData(state, password);
         fileName = 'coinkeeper_backup.coinkeeper';
         fileType = 'application/json';
       } else {
-        // Unencrypted export is only for dev mode, no password needed.
         fileContent = JSON.stringify(state, null, 2);
         fileName = 'coinkeeper_backup.json';
         fileType = 'application/json';
@@ -217,8 +218,8 @@ export function DataManagement({
       setIsImportOpen(true);
     } else {
       toast({
-        title: 'Unsupported File',
-        description: 'Please select a .coinkeeper or .json file.',
+        title: t('toastUnsupportedFile'),
+        description: t('toastUnsupportedFileDesc'),
         variant: 'destructive',
       });
     }
@@ -242,7 +243,7 @@ export function DataManagement({
           decryptedState = JSON.parse(fileContent);
         } else {
           if (!password) {
-            throw new Error('Password is required for .coinkeeper files.');
+            throw new Error(t('toastPasswordRequired'));
           }
           decryptedState = (await decryptData(
             fileContent,
@@ -296,11 +297,7 @@ export function DataManagement({
 
       await Promise.all(db.tables.map((table) => table.clear()));
       sessionStorage.clear();
-      toast({
-        title: 'Application Reset',
-        description:
-          'All data has been cleared. The application will now reload.',
-      });
+      toast({title: t('toastAppReset'), description: t('toastAppResetDesc')});
 
       setTimeout(() => {
         window.location.reload();
@@ -308,8 +305,8 @@ export function DataManagement({
     } catch (error) {
       console.error('Failed to reset data:', error);
       toast({
-        title: 'Reset Failed',
-        description: 'Could not clear all application data.',
+        title: t('toastResetFailed'),
+        description: t('toastResetFailedDesc'),
         variant: 'destructive',
       });
       setIsLoading(false);
@@ -330,7 +327,9 @@ export function DataManagement({
             <DialogHeader>
               <DialogTitle>{t('secureExport')}</DialogTitle>
               <DialogDescription>
-                {t('secureExportDescription')}
+                {isMasterPasswordSet
+                  ? t('secureExportPasswordPrompt')
+                  : t('secureExportDescription')}
               </DialogDescription>
             </DialogHeader>
             <Form {...exportForm}>
@@ -345,7 +344,7 @@ export function DataManagement({
                       checked={shouldEncrypt}
                       onCheckedChange={setShouldEncrypt}
                     />
-                    <Label htmlFor="encrypt-switch">Encrypt Data</Label>
+                    <Label htmlFor="encrypt-switch">{t('encryptData')}</Label>
                   </div>
                 )}
                 {shouldEncrypt && (
@@ -375,7 +374,9 @@ export function DataManagement({
                   {isLoading && (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   )}
-                  {shouldEncrypt ? t('encryptAndExport') : 'Export Unencrypted'}
+                  {shouldEncrypt
+                    ? t('encryptAndExport')
+                    : t('exportUnencrypted')}
                 </Button>
               </form>
             </Form>
@@ -409,15 +410,14 @@ export function DataManagement({
                 className="space-y-4 pt-4"
               >
                 <p className="text-sm text-muted-foreground">
-                  If importing an unencrypted `.json` file, you can leave the
-                  password field blank and click the import button.
+                  {t('unencryptedImportNote')}
                 </p>
                 <FormField
                   control={importForm.control}
                   name="password"
                   render={({field}) => (
                     <FormItem>
-                      <FormLabel>{t('masterPassword')}</FormLabel>
+                      <FormLabel>{t('decryptionPassword')}</FormLabel>
                       <FormControl>
                         <div className="relative">
                           <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -448,9 +448,7 @@ export function DataManagement({
           <DialogContent>
             <DialogHeader>
               <DialogTitle>{t('setPassword')}</DialogTitle>
-              <DialogDescription>
-                You must set a master password to export data securely.
-              </DialogDescription>
+              <DialogDescription>{t('setPasswordToExport')}</DialogDescription>
             </DialogHeader>
             <PasswordManager
               onPasswordSet={() => {
@@ -509,7 +507,9 @@ export function DataManagement({
           <DialogHeader>
             <DialogTitle>{t('secureExport')}</DialogTitle>
             <DialogDescription>
-              Enter your master password to encrypt and export your data.
+              {isMasterPasswordSet
+                ? t('secureExportPasswordPrompt')
+                : t('secureExportDescription')}
             </DialogDescription>
           </DialogHeader>
           <Form {...exportForm}>
@@ -524,7 +524,9 @@ export function DataManagement({
                     checked={shouldEncrypt}
                     onCheckedChange={setShouldEncrypt}
                   />
-                  <Label htmlFor="encrypt-switch-main">Encrypt Data</Label>
+                  <Label htmlFor="encrypt-switch-main">
+                    {t('encryptData')}
+                  </Label>
                 </div>
               )}
               {shouldEncrypt && (
@@ -552,7 +554,7 @@ export function DataManagement({
               )}
               <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {shouldEncrypt ? t('encryptAndExport') : 'Export Unencrypted'}
+                {shouldEncrypt ? t('encryptAndExport') : t('exportUnencrypted')}
               </Button>
             </form>
           </Form>
@@ -580,15 +582,14 @@ export function DataManagement({
               className="space-y-4 pt-4"
             >
               <p className="text-sm text-muted-foreground">
-                If importing an unencrypted `.json` file, you can leave the
-                password field blank and click the import button.
+                {t('unencryptedImportNote')}
               </p>
               <FormField
                 control={importForm.control}
                 name="password"
                 render={({field}) => (
                   <FormItem>
-                    <FormLabel>{t('masterPassword')}</FormLabel>
+                    <FormLabel>{t('decryptionPassword')}</FormLabel>
                     <FormControl>
                       <div className="relative">
                         <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -618,9 +619,7 @@ export function DataManagement({
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{t('setPassword')}</DialogTitle>
-            <DialogDescription>
-              You must set a master password to export data securely.
-            </DialogDescription>
+            <DialogDescription>{t('setPasswordToExport')}</DialogDescription>
           </DialogHeader>
           <PasswordManager
             onPasswordSet={() => {
@@ -635,11 +634,9 @@ export function DataManagement({
         <CardHeader>
           <CardTitle className="text-destructive flex items-center gap-2">
             <AlertTriangle />
-            Danger Zone
+            {t('dangerZone')}
           </CardTitle>
-          <CardDescription>
-            These actions are irreversible. Please proceed with caution.
-          </CardDescription>
+          <CardDescription>{t('dangerZoneDescription')}</CardDescription>
         </CardHeader>
         <CardContent>
           <AlertDialog
@@ -648,18 +645,15 @@ export function DataManagement({
           >
             <AlertDialogTrigger asChild>
               <Button variant="destructive">
-                <Trash2 className="mr-2 h-4 w-4" /> Reset All Data
+                <Trash2 className="mr-2 h-4 w-4" /> {t('resetAllData')}
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                <AlertDialogTitle>{t('areYouAbsolutelySure')}</AlertDialogTitle>
                 <AlertDialogDescription>
-                  This action cannot be undone. This will permanently delete all
-                  your data, including wallets, transactions, budgets, and
-                  settings.
-                  {settings.user?.passwordHash &&
-                    ' To proceed, please enter your master password below.'}
+                  {t('resetDataWarning')}{' '}
+                  {settings.user?.passwordHash && t('resetDataPasswordConfirm')}
                 </AlertDialogDescription>
               </AlertDialogHeader>
               {settings.user?.passwordHash && (
@@ -704,7 +698,7 @@ export function DataManagement({
                     setResetPasswordError(null);
                   }}
                 >
-                  Cancel
+                  {t('cancel')}
                 </AlertDialogCancel>
                 <AlertDialogAction
                   onClick={(e) => {
@@ -717,7 +711,7 @@ export function DataManagement({
                   {isLoading && (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   )}
-                  Yes, delete all my data
+                  {t('confirmDeleteAllData')}
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
