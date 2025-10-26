@@ -1,6 +1,6 @@
 'use client';
 
-import {useEffect} from 'react';
+import {useEffect, useState} from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import {useRouter} from 'next/navigation';
@@ -66,11 +66,14 @@ export default function LandingPage() {
   const {updateSettings} = useSettings();
   const {setIsPageTransitioning} = useAppContext();
   const router = useRouter();
+  const [isBrowser, setIsBrowser] = useState(false);
 
   useEffect(() => {
     // Redirect to dashboard if the app is running in standalone mode (PWA)
     if (window.matchMedia('(display-mode: standalone)').matches) {
       router.replace('/dashboard');
+    } else {
+      setIsBrowser(true);
     }
   }, [router]);
 
@@ -88,6 +91,11 @@ export default function LandingPage() {
     en: 'English',
     id: 'Bahasa Indonesia',
   };
+
+  if (!isBrowser) {
+    // Don't render anything until we've checked the display mode to avoid flash
+    return null;
+  }
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
