@@ -58,6 +58,8 @@ export const initialMockState: AppState = {
     }, {} as Record<DashboardCardKey, boolean>),
     devMode: false,
     toastDuration: mockSettings.toastDuration,
+    passwordHash: mockSettings.passwordHash,
+    passwordHint: mockSettings.passwordHint,
   },
   history: [],
   restoreBin: [],

@@ -186,9 +186,9 @@ export type DashboardCardKey =
   | "netIncome"
   | "incomeExpenseChart"
   | "expenseDistributionChart"
+  | "recentTransactions"
   | "budgetOverview"
-  | "debtLoanOverview"
-  | "recentTransactions";
+  | "debtLoanOverview";
 
 export type DashboardCardSetting = {
   id: DashboardCardKey;
@@ -214,6 +214,8 @@ export type AppSettings = {
   decimalPlaces: number;
   devMode: boolean;
   toastDuration: number;
+  passwordHash: string | null;
+  passwordHint: string | null;
 };
 
 export type AppState = {

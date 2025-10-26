@@ -17,5 +17,7 @@
     "budgetOverview",
     "debtLoanOverview",
     "recentTransactions"
-  ]
+  ],
+  "passwordHash": null,
+  "passwordHint": null
 }
