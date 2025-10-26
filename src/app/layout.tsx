@@ -46,6 +46,25 @@ export default function RootLayout({children}: {children: React.ReactNode}) {
           rel="stylesheet"
         />
         <link rel="apple-touch-icon" href="/icons/icon-192x192.svg" />
+        <meta property="og:title" content="CoinKeeper" />
+        <meta
+          property="og:description"
+          content="Manage Your Finances, Entirely Yours."
+        />
+        <meta property="og:url" content="https://coinkeeper.rendzzx.com" />
+        <meta
+          property="og:image"
+          content="https://coinkeeper.rendzzx.com/banner/banner.png"
+        />
+        <meta property="og:image:width" content="1920" />
+        <meta property="og:image:height" content="1080" />
+        <meta property="og:locale" content="en-US" />
+        <meta property="og:type" content="website" />
+        <meta
+          name="description"
+          content="A personal finance management application that runs entirely in your browser."
+        />
+        <meta name="theme-color" content="#2D6373" />
       </head>
       <body className={cn('font-body antialiased min-h-screen bg-background')}>
         <ThemeProvider
