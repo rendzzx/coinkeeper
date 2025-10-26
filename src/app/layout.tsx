@@ -11,14 +11,18 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'CoinKeeper',
     description: 'Manage Your Finances, Entirely Yours.',
+    url: 'https://coinkeeper.rendzzx.com',
+    siteName: 'coinkeeper',
     images: [
       {
-        url: '/banner/banner.svg',
-        width: 1200,
-        height: 630,
+        url: '/banner/banner.png',
+        width: 1920,
+        height: 1080,
         alt: 'CoinKeeper Banner',
       },
     ],
+    locale: 'en-US',
+    type: 'website',
   },
   manifest: '/manifest.webmanifest',
 };
