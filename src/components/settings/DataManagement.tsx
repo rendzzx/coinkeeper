@@ -11,6 +11,8 @@ import {
   Loader2,
   ShieldOff,
   Shield,
+  AlertTriangle,
+  Trash2,
 } from "lucide-react";
 import {useAppContext} from "@/context/AppContext";
 import {useSettings} from "@/context/SettingsContext";
@@ -38,6 +40,17 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import {Input} from "@/components/ui/input";
 import {encryptData, decryptData} from "@/lib/encryption";
 import {toast} from "@/hooks/use-toast-internal";
@@ -46,6 +59,7 @@ import {useTranslation} from "@/hooks/use-translation";
 import {Switch} from "../ui/switch";
 import {Label} from "../ui/label";
 import {cn} from "@/lib/utils";
+import {db} from "@/lib/db";
 
 const passwordSchema = (useEncryption: boolean) =>
   z.object({
@@ -78,6 +92,7 @@ export function DataManagement({
   const {t} = useTranslation();
   const [isExportOpenState, setIsExportOpenState] = useState(false);
   const [isImportOpen, setIsImportOpen] = useState(false);
+  const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [useEncryption, setUseEncryption] = useState(true);
   const internalFileInputRef = useRef<HTMLInputElement>(null);
@@ -242,6 +257,36 @@ export function DataManagement({
     reader.readAsText(file);
   };
 
+  const handleResetData = async () => {
+    setIsLoading(true);
+    try {
+      // Clear all tables in IndexedDB
+      await Promise.all(db.tables.map((table) => table.clear()));
+
+      // Clear session storage to remove cached state
+      sessionStorage.clear();
+
+      toast({
+        title: "Application Reset",
+        description:
+          "All data has been cleared. The application will now reload.",
+      });
+
+      // Wait a moment for the toast to be visible, then reload
+      setTimeout(() => {
+        window.location.reload();
+      }, 1500);
+    } catch (error) {
+      console.error("Failed to reset data:", error);
+      toast({
+        title: "Reset Failed",
+        description: "Could not clear all application data.",
+        variant: "destructive",
+      });
+      setIsLoading(false);
+    }
+  };
+
   if (isTriggered) {
     return (
       <>
@@ -382,64 +427,133 @@ export function DataManagement({
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{t("dataManagement")}</CardTitle>
-        <CardDescription>{t("dataManagementDescription")}</CardDescription>
-      </CardHeader>
-      <CardContent className="grid gap-4 grid-cols-1 sm:grid-cols-2">
-        {/* EXPORT */}
-        <Dialog
-          open={isExportOpen}
-          onOpenChange={(isOpen) => {
-            setIsExportOpen(isOpen);
-            if (!isOpen) exportForm.reset();
-          }}
-        >
-          <DialogTrigger asChild>
-            <Button variant="outline">
-              <Download className="mr-2 h-4 w-4" /> {t("exportData")}
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle className={cn(!useEncryption && "line-through")}>
-                {t("secureExport")}
-              </DialogTitle>
-              <DialogDescription>
-                {useEncryption
-                  ? t("secureExportDescription")
-                  : t("unencryptedExportDescription")}
-              </DialogDescription>
-            </DialogHeader>
-            <Form {...exportForm}>
-              <form
-                onSubmit={exportForm.handleSubmit(handleExport)}
-                className="space-y-4 pt-4"
-              >
-                {settings.devMode && (
-                  <div className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
-                    <Label
-                      htmlFor="use-encryption"
-                      className="flex items-center gap-2"
-                    >
-                      {useEncryption ? <Shield /> : <ShieldOff />}
-                      <span>Use Encryption</span>
-                    </Label>
-                    <Switch
-                      id="use-encryption"
-                      checked={useEncryption}
-                      onCheckedChange={setUseEncryption}
+    <>
+      <Card>
+        <CardHeader>
+          <CardTitle>{t("dataManagement")}</CardTitle>
+          <CardDescription>{t("dataManagementDescription")}</CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-4 grid-cols-1 sm:grid-cols-2">
+          {/* EXPORT */}
+          <Dialog
+            open={isExportOpen}
+            onOpenChange={(isOpen) => {
+              setIsExportOpen(isOpen);
+              if (!isOpen) exportForm.reset();
+            }}
+          >
+            <DialogTrigger asChild>
+              <Button variant="outline">
+                <Download className="mr-2 h-4 w-4" /> {t("exportData")}
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle className={cn(!useEncryption && "line-through")}>
+                  {t("secureExport")}
+                </DialogTitle>
+                <DialogDescription>
+                  {useEncryption
+                    ? t("secureExportDescription")
+                    : t("unencryptedExportDescription")}
+                </DialogDescription>
+              </DialogHeader>
+              <Form {...exportForm}>
+                <form
+                  onSubmit={exportForm.handleSubmit(handleExport)}
+                  className="space-y-4 pt-4"
+                >
+                  {settings.devMode && (
+                    <div className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
+                      <Label
+                        htmlFor="use-encryption"
+                        className="flex items-center gap-2"
+                      >
+                        {useEncryption ? <Shield /> : <ShieldOff />}
+                        <span>Use Encryption</span>
+                      </Label>
+                      <Switch
+                        id="use-encryption"
+                        checked={useEncryption}
+                        onCheckedChange={setUseEncryption}
+                      />
+                    </div>
+                  )}
+                  {useEncryption && (
+                    <FormField
+                      control={exportForm.control}
+                      name="password"
+                      render={({field}) => (
+                        <FormItem>
+                          <FormLabel>{t("encryptionPassword")}</FormLabel>
+                          <FormControl>
+                            <div className="relative">
+                              <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                              <Input
+                                type="password"
+                                placeholder="********"
+                                {...field}
+                                className="pl-10"
+                              />
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
                     />
-                  </div>
-                )}
-                {useEncryption && (
+                  )}
+                  <Button type="submit" className="w-full" disabled={isLoading}>
+                    {isLoading && (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    )}
+                    {useEncryption ? t("encryptAndExport") : t("exportData")}
+                  </Button>
+                </form>
+              </Form>
+            </DialogContent>
+          </Dialog>
+
+          {/* IMPORT */}
+          <Dialog
+            open={isImportOpen}
+            onOpenChange={(isOpen) => {
+              setIsImportOpen(isOpen);
+              if (!isOpen) importForm.reset();
+            }}
+          >
+            <Button onClick={handleImportClick} disabled={isLoading}>
+              {isLoading ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Upload className="mr-2 h-4 w-4" />
+              )}
+              {t("importData")}
+            </Button>
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileChange}
+              accept=".coinkeeper,.json"
+              className="hidden"
+            />
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>{t("secureImport")}</DialogTitle>
+                <DialogDescription>
+                  {t("secureImportDescription")}
+                </DialogDescription>
+              </DialogHeader>
+              <Form {...importForm}>
+                <form
+                  onSubmit={importForm.handleSubmit(handlePasswordImport)}
+                  className="space-y-4 pt-4"
+                >
                   <FormField
-                    control={exportForm.control}
+                    control={importForm.control}
                     name="password"
                     render={({field}) => (
                       <FormItem>
-                        <FormLabel>{t("encryptionPassword")}</FormLabel>
+                        <FormLabel>{t("decryptionPassword")}</FormLabel>
                         <FormControl>
                           <div className="relative">
                             <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -455,85 +569,66 @@ export function DataManagement({
                       </FormItem>
                     )}
                   />
-                )}
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading && (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  )}
-                  {useEncryption ? t("encryptAndExport") : t("exportData")}
-                </Button>
-              </form>
-            </Form>
-          </DialogContent>
-        </Dialog>
+                  <Button type="submit" className="w-full" disabled={isLoading}>
+                    {isLoading && (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    )}
+                    {t("decryptAndImport")}
+                  </Button>
+                </form>
+              </Form>
+            </DialogContent>
+          </Dialog>
+        </CardContent>
+      </Card>
 
-        {/* IMPORT */}
-        <Dialog
-          open={isImportOpen}
-          onOpenChange={(isOpen) => {
-            setIsImportOpen(isOpen);
-            if (!isOpen) importForm.reset();
-          }}
-        >
-          <Button onClick={handleImportClick} disabled={isLoading}>
-            {isLoading ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              <Upload className="mr-2 h-4 w-4" />
-            )}
-            {t("importData")}
-          </Button>
-          <input
-            type="file"
-            ref={fileInputRef}
-            onChange={handleFileChange}
-            accept=".coinkeeper,.json"
-            className="hidden"
-          />
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>{t("secureImport")}</DialogTitle>
-              <DialogDescription>
-                {t("secureImportDescription")}
-              </DialogDescription>
-            </DialogHeader>
-            <Form {...importForm}>
-              <form
-                onSubmit={importForm.handleSubmit(handlePasswordImport)}
-                className="space-y-4 pt-4"
-              >
-                <FormField
-                  control={importForm.control}
-                  name="password"
-                  render={({field}) => (
-                    <FormItem>
-                      <FormLabel>{t("decryptionPassword")}</FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                          <Input
-                            type="password"
-                            placeholder="********"
-                            {...field}
-                            className="pl-10"
-                          />
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <Button type="submit" className="w-full" disabled={isLoading}>
+      <Card className="border-destructive">
+        <CardHeader>
+          <CardTitle className="text-destructive flex items-center gap-2">
+            <AlertTriangle />
+            Danger Zone
+          </CardTitle>
+          <CardDescription>
+            These actions are irreversible. Please proceed with caution.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <AlertDialog
+            open={isResetConfirmOpen}
+            onOpenChange={setIsResetConfirmOpen}
+          >
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive">
+                <Trash2 className="mr-2 h-4 w-4" /> Reset All Data
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This action cannot be undone. This will permanently delete all
+                  your data, including wallets, transactions, budgets, and
+                  settings. The application will be restored to its initial
+                  state.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={handleResetData}
+                  disabled={isLoading}
+                  className="bg-destructive hover:bg-destructive/90"
+                >
                   {isLoading && (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   )}
-                  {t("decryptAndImport")}
-                </Button>
-              </form>
-            </Form>
-          </DialogContent>
-        </Dialog>
-      </CardContent>
-    </Card>
+                  Yes, delete all my data
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </CardContent>
+      </Card>
+    </>
   );
 }
