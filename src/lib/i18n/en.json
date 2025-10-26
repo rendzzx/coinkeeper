@@ -178,6 +178,7 @@
   "toWallet": "To Wallet",
   "numberFormat": "Number Format",
   "selectAFormat": "Select a format",
+  "selectTimeout": "Select Timeout",
   "numberFormatIDR": "1.234,00 (IDR)",
   "numberFormatUSD": "1,234.00 (USD)",
   "decimalPlaces": "Decimal Places",
