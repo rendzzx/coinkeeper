@@ -103,7 +103,7 @@ export default function LandingPage() {
         <div className="container flex h-16 items-center px-4 md:px-6">
           <Link
             href="#"
-            className="flex items-center justify-center gap-2 font-semibold"
+            className="flex items-center justify-center gap-2 font-semibold lg:pl-20"
           >
             <Logo className="h-6 w-6 text-primary" />
             <span className="font-headline text-lg">CoinKeeper</span>
