@@ -399,7 +399,7 @@
   "importantPasswordRecovery": "Important: Password Recovery",
   "passwordRecoveryWarning": "This application has no central server. If you forget your master password, it **cannot be recovered**. You will permanently lose access to your data unless you have an unencrypted backup. Please store your password and hint in a safe place.",
   "removePasswordConfirmTitle": "Are you sure you want to remove the password?",
-  "removePasswordConfirmDesc": "Your application will no longer be password protected.",
+  "removePasswordConfirmDesc": "Your application will no longer be password protected. Enter your current password to confirm.",
   "continue": "Continue",
   "welcomeBack": "Welcome Back",
   "unlockAppDescription": "Enter your master password to unlock CoinKeeper.",

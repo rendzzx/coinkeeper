@@ -29,16 +29,13 @@ import {Input} from "@/components/ui/input";
 import {toast} from "@/hooks/use-toast-internal";
 import {Alert, AlertDescription, AlertTitle} from "@/components/ui/alert";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 const passwordSchema = z
   .object({
@@ -52,7 +49,12 @@ const passwordSchema = z
     path: ["confirmPassword"],
   });
 
+const removePasswordSchema = z.object({
+  password: z.string().min(1, "Password cannot be empty."),
+});
+
 type PasswordFormValues = z.infer<typeof passwordSchema>;
+type RemovePasswordFormValues = z.infer<typeof removePasswordSchema>;
 
 function PasswordInput({
   field,
@@ -90,9 +92,11 @@ export function PasswordManager() {
   const {settings, updateSettings} = useSettings();
   const {t} = useTranslation();
   const [isFormVisible, setIsFormVisible] = useState(false);
+  const [isRemoveConfirmOpen, setIsRemoveConfirmOpen] = useState(false);
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showRemovePassword, setShowRemovePassword] = useState(false);
   const isPasswordSet = !!settings.passwordHash;
 
   const form = useForm<PasswordFormValues>({
@@ -103,6 +107,11 @@ export function PasswordManager() {
       confirmPassword: "",
       passwordHint: settings.passwordHint || "",
     },
+  });
+
+  const removeForm = useForm<RemovePasswordFormValues>({
+    resolver: zodResolver(removePasswordSchema),
+    defaultValues: {password: ""},
   });
 
   const onSubmit = async (data: PasswordFormValues) => {
@@ -134,13 +143,26 @@ export function PasswordManager() {
     form.reset();
   };
 
-  const handleRemovePassword = async () => {
+  const handleRemovePassword = async (data: RemovePasswordFormValues) => {
+    const isVerified = await verifyPassword(
+      data.password,
+      settings.passwordHash!
+    );
+    if (!isVerified) {
+      removeForm.setError("password", {
+        type: "manual",
+        message: t("incorrectCurrentPassword"),
+      });
+      return;
+    }
+
     await updateSettings({passwordHash: null, passwordHint: null});
     toast({
       title: t("passwordRemovedSuccess"),
       description: t("passwordRemovedSuccessDesc"),
     });
-    setIsFormVisible(false);
+    setIsRemoveConfirmOpen(false);
+    removeForm.reset();
   };
 
   const formContent = (
@@ -256,30 +278,65 @@ export function PasswordManager() {
               {isPasswordSet ? t("changePassword") : t("setPassword")}
             </Button>
             {isPasswordSet && (
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button variant="destructive">
-                    <Unlock className="mr-2" />
-                    {t("removePassword")}
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>
-                      {t("removePasswordConfirmTitle")}
-                    </AlertDialogTitle>
-                    <AlertDialogDescription>
+              <Dialog
+                open={isRemoveConfirmOpen}
+                onOpenChange={setIsRemoveConfirmOpen}
+              >
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>{t("removePasswordConfirmTitle")}</DialogTitle>
+                    <DialogDescription>
                       {t("removePasswordConfirmDesc")}
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleRemovePassword}>
-                      {t("continue")}
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
+                    </DialogDescription>
+                  </DialogHeader>
+                  <Form {...removeForm}>
+                    <form
+                      onSubmit={removeForm.handleSubmit(handleRemovePassword)}
+                      className="space-y-4"
+                    >
+                      <FormField
+                        control={removeForm.control}
+                        name="password"
+                        render={({field}) => (
+                          <FormItem>
+                            <FormLabel>{t("currentPassword")}</FormLabel>
+                            <FormControl>
+                              <PasswordInput
+                                field={field}
+                                placeholder="********"
+                                show={showRemovePassword}
+                                onToggle={() =>
+                                  setShowRemovePassword((p) => !p)
+                                }
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <DialogFooter>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          onClick={() => setIsRemoveConfirmOpen(false)}
+                        >
+                          {t("cancel")}
+                        </Button>
+                        <Button type="submit" variant="destructive">
+                          {t("removePassword")}
+                        </Button>
+                      </DialogFooter>
+                    </form>
+                  </Form>
+                </DialogContent>
+                <Button
+                  variant="destructive"
+                  onClick={() => setIsRemoveConfirmOpen(true)}
+                >
+                  <Unlock className="mr-2" />
+                  {t("removePassword")}
+                </Button>
+              </Dialog>
             )}
           </div>
         )}
