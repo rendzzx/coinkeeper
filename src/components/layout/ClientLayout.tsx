@@ -1,13 +1,13 @@
-"use client";
+'use client';
 
-import React, {useState, useEffect, useCallback, useRef} from "react";
-import {usePathname} from "next/navigation";
-import Link from "next/link";
-import {useTheme} from "next-themes";
-import {Settings, History, Lock, Download, Upload} from "lucide-react";
+import React, {useState, useEffect, useCallback, useRef} from 'react';
+import {usePathname} from 'next/navigation';
+import Link from 'next/link';
+import {useTheme} from 'next-themes';
+import {Settings, History, Lock, Download, Upload} from 'lucide-react';
 
-import {cn} from "@/lib/utils";
-import {Toaster} from "@/components/ui/toaster";
+import {cn} from '@/lib/utils';
+import {Toaster} from '@/components/ui/toaster';
 import {
   Sidebar,
   SidebarProvider,
@@ -20,33 +20,33 @@ import {
   SidebarSeparator,
   SidebarTrigger,
   useSidebar,
-} from "@/components/ui/sidebar";
-import {Logo} from "@/components/icons/Logo";
-import {AnimatedLogo} from "@/components/icons/AnimatedLogo";
-import {Nav} from "@/components/layout/Nav";
-import {Button} from "@/components/ui/button";
-import {useTranslation} from "@/hooks/use-translation";
-import {AppContextLoader} from "@/context/AppContextLoader";
-import {useSettings} from "@/context/SettingsContext";
-import {PageTransitionLoader} from "@/components/layout/PageTransitionLoader";
-import {useAppContext} from "@/context/AppContext";
-import {LockScreen} from "@/components/layout/LockScreen";
-import useIdle from "@/hooks/use-idle";
-import {DataManagement} from "../settings/DataManagement";
+} from '@/components/ui/sidebar';
+import {Logo} from '@/components/icons/Logo';
+import {AnimatedLogo} from '@/components/icons/AnimatedLogo';
+import {Nav} from '@/components/layout/Nav';
+import {Button} from '@/components/ui/button';
+import {useTranslation} from '@/hooks/use-translation';
+import {AppContextLoader} from '@/context/AppContextLoader';
+import {useSettings} from '@/context/SettingsContext';
+import {PageTransitionLoader} from '@/components/layout/PageTransitionLoader';
+import {useAppContext} from '@/context/AppContext';
+import {LockScreen} from '@/components/layout/LockScreen';
+import useIdle from '@/hooks/use-idle';
+import {DataManagement} from '../settings/DataManagement';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "../ui/tooltip";
-import {AutoLockWarning} from "./AutoLockWarning";
+} from '../ui/tooltip';
+import {AutoLockWarning} from './AutoLockWarning';
 
 function AppHeader() {
   const {isMobile, toggleSidebar} = useSidebar();
   return (
     <header
       className={cn(
-        "sticky top-0 z-10 flex h-14 items-center gap-4 border-b bg-background px-4 sm:hidden"
+        'sticky top-0 z-10 flex h-14 items-center gap-4 border-b bg-background px-4 sm:hidden'
       )}
     >
       {isMobile && (
@@ -89,7 +89,7 @@ function AppSidebarFooter({
   const {isMobile, setOpenMobile} = useSidebar();
   const {setIsPageTransitioning} = useAppContext();
   const {settings} = useSettings();
-  const isPasswordSet = !!settings.passwordHash;
+  const isPasswordSet = !!settings.user?.passwordHash;
 
   const handleLinkClick = (href: string) => {
     if (isMobile) {
@@ -101,7 +101,7 @@ function AppSidebarFooter({
   };
 
   const iconButtonClass =
-    "h-9 w-9 data-[state=collapsed]:h-9 data-[state=collapsed]:w-9 group-data-[collapsible=icon]/sidebar:h-9 group-data-[collapsible=icon]/sidebar:w-9";
+    'h-9 w-9 data-[state=collapsed]:h-9 data-[state=collapsed]:w-9 group-data-[collapsible=icon]/sidebar:h-9 group-data-[collapsible=icon]/sidebar:w-9';
 
   return (
     <SidebarFooter>
@@ -109,26 +109,26 @@ function AppSidebarFooter({
         <SidebarMenuItem>
           <SidebarMenuButton
             asChild
-            isActive={pathname === "/history"}
+            isActive={pathname === '/history'}
             size="lg"
-            onClick={() => handleLinkClick("/history")}
+            onClick={() => handleLinkClick('/history')}
           >
             <Link href="/history">
               <History />
-              <span>{t("history")}</span>
+              <span>{t('history')}</span>
             </Link>
           </SidebarMenuButton>
         </SidebarMenuItem>
         <SidebarMenuItem>
           <SidebarMenuButton
             asChild
-            isActive={pathname === "/settings"}
+            isActive={pathname === '/settings'}
             size="lg"
-            onClick={() => handleLinkClick("/settings")}
+            onClick={() => handleLinkClick('/settings')}
           >
             <Link href="/settings">
               <Settings />
-              <span>{t("settings")}</span>
+              <span>{t('settings')}</span>
             </Link>
           </SidebarMenuButton>
         </SidebarMenuItem>
@@ -144,13 +144,13 @@ function AppSidebarFooter({
                 className={iconButtonClass}
                 onClick={handleLock}
                 disabled={!isPasswordSet}
-                aria-label={t("lock")}
+                aria-label={t('lock')}
               >
                 <Lock />
               </Button>
             </TooltipTrigger>
             <TooltipContent side="top" align="center">
-              {t("lock")}
+              {t('lock')}
             </TooltipContent>
           </Tooltip>
           <Tooltip>
@@ -160,13 +160,13 @@ function AppSidebarFooter({
                 size="icon"
                 className={iconButtonClass}
                 onClick={handleExport}
-                aria-label={t("exportData")}
+                aria-label={t('exportData')}
               >
                 <Download />
               </Button>
             </TooltipTrigger>
             <TooltipContent side="top" align="center">
-              {t("exportData")}
+              {t('exportData')}
             </TooltipContent>
           </Tooltip>
           <Tooltip>
@@ -176,13 +176,13 @@ function AppSidebarFooter({
                 size="icon"
                 className={iconButtonClass}
                 onClick={handleImport}
-                aria-label={t("importData")}
+                aria-label={t('importData')}
               >
                 <Upload />
               </Button>
             </TooltipTrigger>
             <TooltipContent side="top" align="center">
-              {t("importData")}
+              {t('importData')}
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
@@ -202,7 +202,7 @@ function AppSidebarContent() {
 function AppLayout({children}: {children: React.ReactNode}) {
   const pathname = usePathname();
   const {handleLock, handleExport, handleImport} = useAppContext();
-  if (pathname === "/") return <>{children}</>;
+  if (pathname === '/') return <>{children}</>;
 
   return (
     <SidebarProvider>
@@ -255,14 +255,14 @@ function InnerLayout({children}: {children: React.ReactNode}) {
   const [isExportOpen, setIsExportOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const timeout = (settings?.autoLockTimeout ?? 0) * 1000;
+  const timeout = (settings.user?.autoLockTimeout ?? 0) * 1000;
   const {isIdle, isPrompting, countdown, resetTimers} = useIdle(timeout, 15000);
 
   useEffect(() => {
-    if (settings?.passwordHash) {
+    if (settings.user?.passwordHash) {
       setIsLocked(true);
     }
-  }, [settings?.passwordHash]);
+  }, [settings.user?.passwordHash]);
 
   useEffect(() => {
     if (state && state.categories.length > 0) {
@@ -277,15 +277,15 @@ function InnerLayout({children}: {children: React.ReactNode}) {
     if (pageTitle) {
       document.title = `${pageTitle} | CoinKeeper`;
     } else {
-      document.title = "CoinKeeper";
+      document.title = 'CoinKeeper';
     }
   }, [pageTitle]);
 
   useEffect(() => {
-    if (isIdle && settings?.passwordHash && !isLocked) {
+    if (isIdle && settings.user?.passwordHash && !isLocked) {
       setIsLocked(true);
     }
-  }, [isIdle, settings?.passwordHash, isLocked]);
+  }, [isIdle, settings.user?.passwordHash, isLocked]);
 
   const handleUnlock = useCallback(() => {
     setIsLocked(false);
@@ -293,10 +293,10 @@ function InnerLayout({children}: {children: React.ReactNode}) {
   }, [resetTimers]);
 
   const handleLock = useCallback(() => {
-    if (settings?.passwordHash) {
+    if (settings.user?.passwordHash) {
       setIsLocked(true);
     }
-  }, [settings?.passwordHash]);
+  }, [settings.user?.passwordHash]);
 
   const handleExport = useCallback(() => {
     setIsExportOpen(true);
@@ -327,24 +327,24 @@ function InnerLayout({children}: {children: React.ReactNode}) {
     <>
       <div
         className={cn(
-          "fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-background transition-opacity duration-300",
-          isInitialLoading ? "opacity-100" : "opacity-0 pointer-events-none"
+          'fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-background transition-opacity duration-300',
+          isInitialLoading ? 'opacity-100' : 'opacity-0 pointer-events-none'
         )}
       >
         <AnimatedLogo text={true} />
       </div>
 
-      {!isInitialLoading && isLocked && settings?.passwordHash && (
+      {!isInitialLoading && isLocked && settings.user?.passwordHash && (
         <LockScreen
-          passwordHash={settings.passwordHash}
-          passwordHint={settings.passwordHint}
+          passwordHash={settings.user.passwordHash}
+          passwordHint={settings.user.passwordHint}
           onUnlock={handleUnlock}
         />
       )}
 
       {!isInitialLoading &&
         !isLocked &&
-        settings?.passwordHash &&
+        settings.user?.passwordHash &&
         timeout > 0 && (
           <AutoLockWarning
             isOpen={isPrompting}

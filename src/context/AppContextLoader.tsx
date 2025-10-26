@@ -1,33 +1,34 @@
-"use client";
+'use client';
 
-import {type ReactNode, useState, useEffect, useMemo, useRef} from "react";
-import {v4 as uuidv4} from "uuid";
-import {AppProvider} from "./AppContext";
+import {type ReactNode, useState, useEffect, useMemo, useRef} from 'react';
+import {v4 as uuidv4} from 'uuid';
+import {AppProvider} from './AppContext';
 import type {
   AppState,
   Category,
   DashboardCardKey,
   Transaction,
-} from "@/lib/types";
-import {AnimatedLogo} from "@/components/icons/AnimatedLogo";
-import {db} from "@/lib/db";
-import {useLiveQuery} from "dexie-react-hooks";
+  User,
+} from '@/lib/types';
+import {AnimatedLogo} from '@/components/icons/AnimatedLogo';
+import {db} from '@/lib/db';
+import {useLiveQuery} from 'dexie-react-hooks';
 
-import {WalletProvider} from "./WalletContext";
-import {TransactionProvider} from "./TransactionContext";
-import {ScheduledTransactionProvider} from "./ScheduledTransactionContext";
+import {WalletProvider} from './WalletContext';
+import {TransactionProvider} from './TransactionContext';
+import {ScheduledTransactionProvider} from './ScheduledTransactionContext';
 
-import mockWallets from "@/lib/mock-data/wallets.json";
-import mockWalletTypes from "@/lib/mock-data/wallet-types.json";
-import mockTransactions from "@/lib/mock-data/transactions.json";
-import mockCategories from "@/lib/mock-data/categories.json";
-import mockTags from "@/lib/mock-data/tags.json";
-import mockBudgetsData from "@/lib/mock-data/budgets.json";
-import mockScheduledTransactions from "@/lib/mock-data/scheduled-transactions.json";
-import mockDebts from "@/lib/mock-data/debts.json";
-import mockSettings from "@/lib/mock-data/settings.json";
-import {ALL_NAV_ITEMS, ALL_DASHBOARD_CARDS} from "@/lib/config-data";
-import {SettingsProvider, useSettings} from "./SettingsContext";
+import mockWallets from '@/lib/mock-data/wallets.json';
+import mockWalletTypes from '@/lib/mock-data/wallet-types.json';
+import mockTransactions from '@/lib/mock-data/transactions.json';
+import mockCategories from '@/lib/mock-data/categories.json';
+import mockTags from '@/lib/mock-data/tags.json';
+import mockBudgetsData from '@/lib/mock-data/budgets.json';
+import mockScheduledTransactions from '@/lib/mock-data/scheduled-transactions.json';
+import mockDebts from '@/lib/mock-data/debts.json';
+import mockSettings from '@/lib/mock-data/settings.json';
+import {ALL_NAV_ITEMS, ALL_DASHBOARD_CARDS} from '@/lib/config-data';
+import {SettingsProvider, useSettings} from './SettingsContext';
 
 export const initialMockState: AppState = {
   wallets: mockWallets,
@@ -42,13 +43,13 @@ export const initialMockState: AppState = {
   budgets: mockBudgetsData,
   debts: mockDebts,
   settings: {
-    user: mockSettings.user,
-    currency: mockSettings.currency as "USD" | "IDR" | "EUR",
-    language: mockSettings.language as "en" | "id",
-    theme: "system",
-    timeFormat: mockSettings.timeFormat as "12h" | "24h",
+    user: null,
+    currency: mockSettings.currency as 'USD' | 'IDR' | 'EUR',
+    language: mockSettings.language as 'en' | 'id',
+    theme: 'system',
+    timeFormat: mockSettings.timeFormat as '12h' | '24h',
     hideAmounts: mockSettings.hideAmounts,
-    numberFormat: mockSettings.numberFormat as "IDR" | "USD",
+    numberFormat: mockSettings.numberFormat as 'IDR' | 'USD',
     decimalPlaces: mockSettings.decimalPlaces,
     navItemOrder: ALL_NAV_ITEMS.map((item) => item.id),
     dashboardCardOrder: ALL_DASHBOARD_CARDS.map((c) => c.id),
@@ -58,32 +59,33 @@ export const initialMockState: AppState = {
     }, {} as Record<DashboardCardKey, boolean>),
     devMode: false,
     toastDuration: mockSettings.toastDuration,
-    passwordHash: mockSettings.passwordHash,
-    passwordHint: mockSettings.passwordHint,
   },
   history: [],
   restoreBin: [],
 };
 
-const SESSION_CACHE_KEY = "coinKeeperAppState_Main";
-const CACHE_VERSION = "1.3.1"; // Version updated to include all data
+const SESSION_CACHE_KEY = 'coinKeeperAppState_Main';
+const CACHE_VERSION = '1.3.1'; // Version updated to include all data
 const DEBOUNCE_DELAY = 500;
 
 async function initializeDatabase() {
   const settingsCount = await db.settings.count();
   if (settingsCount === 0) {
     console.log(
-      "%c[DB] Populating with mock data...",
-      "color:#22c55e;font-weight:bold;"
+      '%c[DB] Populating with mock data...',
+      'color:#22c55e;font-weight:bold;'
     );
 
-    const user = {
+    const newUser: User = {
       id: uuidv4(),
       createdAt: new Date().toISOString(),
+      passwordHash: null,
+      passwordHint: null,
+      autoLockTimeout: 0,
     };
-    const settingsWithUser = {...initialMockState.settings, user};
+    const settingsWithUser = {...initialMockState.settings, user: newUser};
 
-    await db.transaction("rw", db.tables, async () => {
+    await db.transaction('rw', db.tables, async () => {
       await db.wallets.bulkAdd(initialMockState.wallets);
       await db.walletTypes.bulkAdd(initialMockState.walletTypes);
       await db.transactions.bulkAdd(initialMockState.transactions);
@@ -95,7 +97,7 @@ async function initializeDatabase() {
       );
       await db.debts.bulkAdd(initialMockState.debts);
       await db.settings.add({
-        key: "userSettings",
+        key: 'userSettings',
         value: settingsWithUser,
       });
     });
@@ -108,7 +110,7 @@ export function AppContextLoader({children}: {children: ReactNode}) {
   useEffect(() => {
     initializeDatabase()
       .then(() => setDbReady(true))
-      .catch((err) => console.error("[DB] Init failed:", err));
+      .catch((err) => console.error('[DB] Init failed:', err));
   }, []);
 
   if (!dbReady) {
@@ -124,27 +126,27 @@ export function AppContextLoader({children}: {children: ReactNode}) {
 
 function getInitialCache(devMode: boolean): AppState | null {
   try {
-    if (devMode) console.time("Load main context from sessionStorage");
+    if (devMode) console.time('Load main context from sessionStorage');
     const raw = sessionStorage.getItem(SESSION_CACHE_KEY);
     if (!raw) {
-      if (devMode) console.timeEnd("Load main context from sessionStorage");
+      if (devMode) console.timeEnd('Load main context from sessionStorage');
       return null;
     }
     const parsed = JSON.parse(raw);
     if (parsed.version === CACHE_VERSION) {
       if (devMode) {
         console.info(
-          "%c[Cache] Loaded main context from sessionStorage",
-          "color:#3b82f6;font-weight:bold;"
+          '%c[Cache] Loaded main context from sessionStorage',
+          'color:#3b82f6;font-weight:bold;'
         );
-        console.timeEnd("Load main context from sessionStorage");
+        console.timeEnd('Load main context from sessionStorage');
       }
       return parsed.state;
     }
   } catch (err) {
-    console.error("[Cache] Failed to parse main context cache:", err);
+    console.error('[Cache] Failed to parse main context cache:', err);
   }
-  if (devMode) console.timeEnd("Load main context from sessionStorage");
+  if (devMode) console.timeEnd('Load main context from sessionStorage');
   return null;
 }
 
@@ -167,11 +169,11 @@ function AppContextCacheManager({liveState}: {liveState: any}) {
           if (devMode) {
             console.info(
               `%c[Cache] Main context session cache updated at ${new Date().toLocaleTimeString()}`,
-              "color:#f59e0b;font-weight:bold;"
+              'color:#f59e0b;font-weight:bold;'
             );
           }
         } catch (err) {
-          console.error("[Cache] Failed to update main context cache:", err);
+          console.error('[Cache] Failed to update main context cache:', err);
         }
       }, DEBOUNCE_DELAY);
     }
@@ -200,7 +202,7 @@ function AppProviderWithLiveQueries({children}: {children: ReactNode}) {
     cachedState?.walletTypes
   );
   const transactions = useLiveQuery(
-    () => db.transactions.orderBy("date").reverse().toArray(),
+    () => db.transactions.orderBy('date').reverse().toArray(),
     [],
     cachedState?.transactions
   );
@@ -222,7 +224,7 @@ function AppProviderWithLiveQueries({children}: {children: ReactNode}) {
   );
   const debts = useLiveQuery(() => db.debts.toArray(), [], cachedState?.debts);
   const history = useLiveQuery(
-    () => db.history.orderBy("timestamp").reverse().toArray(),
+    () => db.history.orderBy('timestamp').reverse().toArray(),
     [],
     cachedState?.history
   );
