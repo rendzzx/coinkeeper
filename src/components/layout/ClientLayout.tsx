@@ -103,6 +103,93 @@ function AppSidebarFooter({
   const iconButtonClass =
     'h-9 w-9 data-[state=collapsed]:h-9 data-[state=collapsed]:w-9 group-data-[collapsible=icon]/sidebar:h-9 group-data-[collapsible=icon]/sidebar:w-9';
 
+  const buttons = (
+    <>
+      <Button
+        variant="ghost"
+        size="icon"
+        className={iconButtonClass}
+        onClick={handleLock}
+        disabled={!isPasswordSet}
+        aria-label={t('lock')}
+      >
+        <Lock />
+      </Button>
+      <Button
+        variant="ghost"
+        size="icon"
+        className={iconButtonClass}
+        onClick={handleExport}
+        aria-label={t('exportData')}
+      >
+        <Download />
+      </Button>
+      <Button
+        variant="ghost"
+        size="icon"
+        className={iconButtonClass}
+        onClick={handleImport}
+        aria-label={t('importData')}
+      >
+        <Upload />
+      </Button>
+    </>
+  );
+
+  const buttonsWithTooltips = (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            className={iconButtonClass}
+            onClick={handleLock}
+            disabled={!isPasswordSet}
+            aria-label={t('lock')}
+          >
+            <Lock />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent side="right" align="center">
+          {t('lock')}
+        </TooltipContent>
+      </Tooltip>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            className={iconButtonClass}
+            onClick={handleExport}
+            aria-label={t('exportData')}
+          >
+            <Download />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent side="right" align="center">
+          {t('exportData')}
+        </TooltipContent>
+      </Tooltip>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            className={iconButtonClass}
+            onClick={handleImport}
+            aria-label={t('importData')}
+          >
+            <Upload />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent side="right" align="center">
+          {t('importData')}
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+
   return (
     <SidebarFooter>
       <SidebarMenu>
@@ -135,57 +222,7 @@ function AppSidebarFooter({
       </SidebarMenu>
       <SidebarSeparator className="my-1" />
       <div className="flex justify-center items-center gap-1 p-2 group-data-[collapsible=icon]/sidebar:flex-col">
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className={iconButtonClass}
-                onClick={handleLock}
-                disabled={!isPasswordSet}
-                aria-label={t('lock')}
-              >
-                <Lock />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="top" align="center">
-              {t('lock')}
-            </TooltipContent>
-          </Tooltip>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className={iconButtonClass}
-                onClick={handleExport}
-                aria-label={t('exportData')}
-              >
-                <Download />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="top" align="center">
-              {t('exportData')}
-            </TooltipContent>
-          </Tooltip>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className={iconButtonClass}
-                onClick={handleImport}
-                aria-label={t('importData')}
-              >
-                <Upload />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="top" align="center">
-              {t('importData')}
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        {isMobile ? buttons : buttonsWithTooltips}
       </div>
     </SidebarFooter>
   );
