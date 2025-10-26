@@ -35,7 +35,7 @@ import {
 } from '@/components/ui/form';
 import {Input} from '@/components/ui/input';
 import {toast} from '@/hooks/use-toast-internal';
-import {Alert, AlertDescription, AlertTitle} from '@/components/ui/alert';
+import {Alert, AlertDescription, AlertTitle} from '../ui/alert';
 import {
   Dialog,
   DialogContent,
@@ -149,7 +149,7 @@ function AutoLockCard() {
   );
 }
 
-export function PasswordManager() {
+export function PasswordManager({onPasswordSet}: {onPasswordSet?: () => void}) {
   const {settings, updateSettings} = useSettings();
   const {t} = useTranslation();
   const [isFormVisible, setIsFormVisible] = useState(false);
@@ -209,6 +209,7 @@ export function PasswordManager() {
     });
     setIsFormVisible(false);
     form.reset();
+    if (onPasswordSet) onPasswordSet();
   };
 
   const handleRemovePassword = async (data: RemovePasswordFormValues) => {
@@ -244,11 +245,13 @@ export function PasswordManager() {
 
   const formContent = (
     <Form {...form}>
-      <Alert variant="destructive" className="mb-6">
-        <AlertTriangle className="h-4 w-4" />
-        <AlertTitle>{t('importantPasswordRecovery')}</AlertTitle>
-        <AlertDescription>{t('passwordRecoveryWarning')}</AlertDescription>
-      </Alert>
+      {!onPasswordSet && (
+        <Alert variant="destructive" className="mb-6">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>{t('importantPasswordRecovery')}</AlertTitle>
+          <AlertDescription>{t('passwordRecoveryWarning')}</AlertDescription>
+        </Alert>
+      )}
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         {isPasswordSet && (
           <FormField
@@ -332,6 +335,10 @@ export function PasswordManager() {
       </form>
     </Form>
   );
+
+  if (onPasswordSet) {
+    return formContent;
+  }
 
   return (
     <div

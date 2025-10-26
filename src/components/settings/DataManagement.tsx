@@ -62,17 +62,23 @@ import {Switch} from '../ui/switch';
 import {Label} from '../ui/label';
 import {cn} from '@/lib/utils';
 import {db} from '@/lib/db';
+import {PasswordManager} from './PasswordManager';
 
-const passwordSchema = (useEncryption: boolean) =>
+const createExportPasswordSchema = (shouldEncrypt: boolean) =>
   z.object({
-    password: useEncryption
-      ? z.string().min(8, 'Password must be at least 8 characters.')
-      : z.string().optional(),
+    password: z
+      .string()
+      .refine((val) => !shouldEncrypt || (val && val.length > 0), {
+        message: 'Password cannot be empty for encryption.',
+      }),
   });
-type PasswordFormValues = z.infer<ReturnType<typeof passwordSchema>>;
+
+type ExportPasswordFormValues = z.infer<
+  ReturnType<typeof createExportPasswordSchema>
+>;
 
 const importPasswordSchema = z.object({
-  password: z.string().min(8, 'Password must be at least 8 characters.'),
+  password: z.string().min(1, 'Password cannot be empty.').optional(),
 });
 type ImportPasswordFormValues = z.infer<typeof importPasswordSchema>;
 
@@ -96,7 +102,7 @@ export function DataManagement({
   const [isImportOpen, setIsImportOpen] = useState(false);
   const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [useEncryption, setUseEncryption] = useState(true);
+  const [isPasswordFormOpen, setIsPasswordFormOpen] = useState(false);
   const [resetPassword, setResetPassword] = useState('');
   const [resetPasswordError, setResetPasswordError] = useState<string | null>(
     null
@@ -104,36 +110,66 @@ export function DataManagement({
   const [showResetPassword, setShowResetPassword] = useState(false);
   const internalFileInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = importTriggerRef || internalFileInputRef;
+  const [shouldEncrypt, setShouldEncrypt] = useState(true);
 
   const isExportOpen = isExportOpenProp ?? isExportOpenState;
   const setIsExportOpen = setIsExportOpenProp ?? setIsExportOpenState;
 
-  const exportForm = useForm<PasswordFormValues>({
-    resolver: zodResolver(passwordSchema(useEncryption)),
+  const isMasterPasswordSet = !!settings.user?.passwordHash;
+
+  const exportPasswordSchema = createExportPasswordSchema(shouldEncrypt);
+
+  const exportForm = useForm<ExportPasswordFormValues>({
+    resolver: zodResolver(exportPasswordSchema),
     defaultValues: {password: ''},
   });
-
-  useEffect(() => {
-    exportForm.trigger();
-  }, [useEncryption, exportForm]);
 
   const importForm = useForm<ImportPasswordFormValues>({
     resolver: zodResolver(importPasswordSchema),
     defaultValues: {password: ''},
   });
 
-  const handleExport = async (data: PasswordFormValues) => {
+  const handleExport = async (data: ExportPasswordFormValues) => {
     setIsLoading(true);
     try {
       let fileContent: string;
       let fileName: string;
       let fileType: string;
 
-      if (useEncryption) {
-        fileContent = await encryptData(state, data.password!);
+      if (shouldEncrypt) {
+        const password = data.password;
+        if (!password) {
+          // This check is now mainly for type safety, Zod handles it.
+          toast({
+            title: 'Encryption Error',
+            description: 'A password is required for encryption.',
+            variant: 'destructive',
+          });
+          setIsLoading(false);
+          return;
+        }
+
+        // Verify password if master password is set
+        if (settings.user?.passwordHash) {
+          const isVerified = await verifyPassword(
+            password,
+            settings.user.passwordHash
+          );
+          if (!isVerified) {
+            exportForm.setError('password', {
+              type: 'manual',
+              message: t('incorrectPassword'),
+            });
+            setIsLoading(false);
+            return;
+          }
+        }
+
+        fileContent = await encryptData(state, password);
         fileName = 'coinkeeper_backup.coinkeeper';
         fileType = 'application/json';
       } else {
+        // Unencrypted export is only for dev mode, no password needed.
         fileContent = JSON.stringify(state, null, 2);
         fileName = 'coinkeeper_backup.json';
         fileType = 'application/json';
@@ -152,29 +188,32 @@ export function DataManagement({
         title: t('toastExportSuccess'),
         description: t('toastExportSuccessDesc'),
       });
+      setIsExportOpen(false);
+      exportForm.reset();
     } catch (error) {
       toast({
         title: t('toastExportFailed'),
         description: t('toastExportFailedDesc'),
         variant: 'destructive',
       });
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
-    setIsExportOpen(false);
-    exportForm.reset();
   };
 
-  const handleImportClick = () => {
-    fileInputRef.current?.click();
+  const handleExportClick = () => {
+    if (isMasterPasswordSet) {
+      setIsExportOpen(true);
+    } else {
+      setIsPasswordFormOpen(true);
+    }
   };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    if (file.name.endsWith('.json') && settings.devMode) {
-      handleDirectImport(file);
-    } else if (file.name.endsWith('.coinkeeper')) {
+    if (file.name.endsWith('.coinkeeper') || file.name.endsWith('.json')) {
       setIsImportOpen(true);
     } else {
       toast({
@@ -183,40 +222,6 @@ export function DataManagement({
         variant: 'destructive',
       });
     }
-  };
-
-  const handleDirectImport = (file: File) => {
-    setIsLoading(true);
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const jsonString = e.target?.result as string;
-        const importedState = JSON.parse(jsonString) as AppState;
-        if (
-          importedState.wallets &&
-          importedState.transactions &&
-          importedState.settings
-        ) {
-          dispatch({type: 'SET_STATE', payload: importedState});
-          toast({
-            title: t('toastImportSuccess'),
-            description: 'Unencrypted data has been restored.',
-          });
-        } else {
-          throw new Error('Invalid data structure');
-        }
-      } catch (error: any) {
-        toast({
-          title: t('toastImportFailed'),
-          description: error.message || 'Could not parse JSON file.',
-          variant: 'destructive',
-        });
-      } finally {
-        setIsLoading(false);
-        if (fileInputRef.current) fileInputRef.current.value = '';
-      }
-    };
-    reader.readAsText(file);
   };
 
   const handlePasswordImport = async ({password}: ImportPasswordFormValues) => {
@@ -230,11 +235,21 @@ export function DataManagement({
 
     reader.onload = async (e) => {
       try {
-        const encryptedString = e.target?.result as string;
-        const decryptedState = (await decryptData(
-          encryptedString,
-          password
-        )) as AppState;
+        const fileContent = e.target?.result as string;
+        let decryptedState: AppState;
+
+        if (file.name.endsWith('.json')) {
+          decryptedState = JSON.parse(fileContent);
+        } else {
+          if (!password) {
+            throw new Error('Password is required for .coinkeeper files.');
+          }
+          decryptedState = (await decryptData(
+            fileContent,
+            password
+          )) as AppState;
+        }
+
         if (
           decryptedState.wallets &&
           decryptedState.transactions &&
@@ -279,19 +294,14 @@ export function DataManagement({
         }
       }
 
-      // Clear all tables in IndexedDB
       await Promise.all(db.tables.map((table) => table.clear()));
-
-      // Clear session storage to remove cached state
       sessionStorage.clear();
-
       toast({
         title: 'Application Reset',
         description:
           'All data has been cleared. The application will now reload.',
       });
 
-      // Wait a moment for the toast to be visible, then reload
       setTimeout(() => {
         window.location.reload();
       }, 1500);
@@ -309,7 +319,6 @@ export function DataManagement({
   if (isTriggered) {
     return (
       <>
-        {/* EXPORT DIALOG (from sidebar) */}
         <Dialog
           open={isExportOpen}
           onOpenChange={(isOpen) => {
@@ -319,13 +328,9 @@ export function DataManagement({
         >
           <DialogContent>
             <DialogHeader>
-              <DialogTitle className={cn(!useEncryption && 'line-through')}>
-                {t('secureExport')}
-              </DialogTitle>
+              <DialogTitle>{t('secureExport')}</DialogTitle>
               <DialogDescription>
-                {useEncryption
-                  ? t('secureExportDescription')
-                  : t('unencryptedExportDescription')}
+                {t('secureExportDescription')}
               </DialogDescription>
             </DialogHeader>
             <Form {...exportForm}>
@@ -334,28 +339,22 @@ export function DataManagement({
                 className="space-y-4 pt-4"
               >
                 {settings.devMode && (
-                  <div className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
-                    <Label
-                      htmlFor="use-encryption-sidebar"
-                      className="flex items-center gap-2"
-                    >
-                      {useEncryption ? <Shield /> : <ShieldOff />}
-                      <span>Use Encryption</span>
-                    </Label>
+                  <div className="flex items-center space-x-2">
                     <Switch
-                      id="use-encryption-sidebar"
-                      checked={useEncryption}
-                      onCheckedChange={setUseEncryption}
+                      id="encrypt-switch"
+                      checked={shouldEncrypt}
+                      onCheckedChange={setShouldEncrypt}
                     />
+                    <Label htmlFor="encrypt-switch">Encrypt Data</Label>
                   </div>
                 )}
-                {useEncryption && (
+                {shouldEncrypt && (
                   <FormField
                     control={exportForm.control}
                     name="password"
                     render={({field}) => (
                       <FormItem>
-                        <FormLabel>{t('encryptionPassword')}</FormLabel>
+                        <FormLabel>{t('masterPassword')}</FormLabel>
                         <FormControl>
                           <div className="relative">
                             <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -376,14 +375,13 @@ export function DataManagement({
                   {isLoading && (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   )}
-                  {useEncryption ? t('encryptAndExport') : t('exportData')}
+                  {shouldEncrypt ? t('encryptAndExport') : 'Export Unencrypted'}
                 </Button>
               </form>
             </Form>
           </DialogContent>
         </Dialog>
 
-        {/* IMPORT DIALOG & HIDDEN INPUT (from sidebar) */}
         <input
           type="file"
           ref={fileInputRef}
@@ -410,12 +408,16 @@ export function DataManagement({
                 onSubmit={importForm.handleSubmit(handlePasswordImport)}
                 className="space-y-4 pt-4"
               >
+                <p className="text-sm text-muted-foreground">
+                  If importing an unencrypted `.json` file, you can leave the
+                  password field blank and click the import button.
+                </p>
                 <FormField
                   control={importForm.control}
                   name="password"
                   render={({field}) => (
                     <FormItem>
-                      <FormLabel>{t('decryptionPassword')}</FormLabel>
+                      <FormLabel>{t('masterPassword')}</FormLabel>
                       <FormControl>
                         <div className="relative">
                           <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -441,6 +443,23 @@ export function DataManagement({
             </Form>
           </DialogContent>
         </Dialog>
+
+        <Dialog open={isPasswordFormOpen} onOpenChange={setIsPasswordFormOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{t('setPassword')}</DialogTitle>
+              <DialogDescription>
+                You must set a master password to export data securely.
+              </DialogDescription>
+            </DialogHeader>
+            <PasswordManager
+              onPasswordSet={() => {
+                setIsPasswordFormOpen(false);
+                setIsExportOpen(true);
+              }}
+            />
+          </DialogContent>
+        </Dialog>
       </>
     );
   }
@@ -453,153 +472,164 @@ export function DataManagement({
           <CardDescription>{t('dataManagementDescription')}</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4 grid-cols-1 sm:grid-cols-2">
-          {/* EXPORT */}
-          <Dialog
-            open={isExportOpen}
-            onOpenChange={(isOpen) => {
-              setIsExportOpen(isOpen);
-              if (!isOpen) exportForm.reset();
-            }}
-          >
-            <DialogTrigger asChild>
-              <Button variant="outline">
-                <Download className="mr-2 h-4 w-4" /> {t('exportData')}
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle className={cn(!useEncryption && 'line-through')}>
-                  {t('secureExport')}
-                </DialogTitle>
-                <DialogDescription>
-                  {useEncryption
-                    ? t('secureExportDescription')
-                    : t('unencryptedExportDescription')}
-                </DialogDescription>
-              </DialogHeader>
-              <Form {...exportForm}>
-                <form
-                  onSubmit={exportForm.handleSubmit(handleExport)}
-                  className="space-y-4 pt-4"
-                >
-                  {settings.devMode && (
-                    <div className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
-                      <Label
-                        htmlFor="use-encryption"
-                        className="flex items-center gap-2"
-                      >
-                        {useEncryption ? <Shield /> : <ShieldOff />}
-                        <span>Use Encryption</span>
-                      </Label>
-                      <Switch
-                        id="use-encryption"
-                        checked={useEncryption}
-                        onCheckedChange={setUseEncryption}
-                      />
-                    </div>
-                  )}
-                  {useEncryption && (
-                    <FormField
-                      control={exportForm.control}
-                      name="password"
-                      render={({field}) => (
-                        <FormItem>
-                          <FormLabel>{t('encryptionPassword')}</FormLabel>
-                          <FormControl>
-                            <div className="relative">
-                              <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                              <Input
-                                type="password"
-                                placeholder="********"
-                                {...field}
-                                className="pl-10"
-                              />
-                            </div>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  )}
-                  <Button type="submit" className="w-full" disabled={isLoading}>
-                    {isLoading && (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    )}
-                    {useEncryption ? t('encryptAndExport') : t('exportData')}
-                  </Button>
-                </form>
-              </Form>
-            </DialogContent>
-          </Dialog>
+          <Button variant="outline" onClick={handleExportClick}>
+            <Download className="mr-2 h-4 w-4" /> {t('exportData')}
+          </Button>
 
-          {/* IMPORT */}
-          <Dialog
-            open={isImportOpen}
-            onOpenChange={(isOpen) => {
-              setIsImportOpen(isOpen);
-              if (!isOpen) importForm.reset();
-            }}
+          <Button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isLoading}
           >
-            <Button onClick={handleImportClick} disabled={isLoading}>
-              {isLoading ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <Upload className="mr-2 h-4 w-4" />
-              )}
-              {t('importData')}
-            </Button>
-            <input
-              type="file"
-              ref={fileInputRef}
-              onChange={handleFileChange}
-              accept=".coinkeeper,.json"
-              className="hidden"
-            />
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>{t('secureImport')}</DialogTitle>
-                <DialogDescription>
-                  {t('secureImportDescription')}
-                </DialogDescription>
-              </DialogHeader>
-              <Form {...importForm}>
-                <form
-                  onSubmit={importForm.handleSubmit(handlePasswordImport)}
-                  className="space-y-4 pt-4"
-                >
-                  <FormField
-                    control={importForm.control}
-                    name="password"
-                    render={({field}) => (
-                      <FormItem>
-                        <FormLabel>{t('decryptionPassword')}</FormLabel>
-                        <FormControl>
-                          <div className="relative">
-                            <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                            <Input
-                              type="password"
-                              placeholder="********"
-                              {...field}
-                              className="pl-10"
-                            />
-                          </div>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <Button type="submit" className="w-full" disabled={isLoading}>
-                    {isLoading && (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    )}
-                    {t('decryptAndImport')}
-                  </Button>
-                </form>
-              </Form>
-            </DialogContent>
-          </Dialog>
+            {isLoading ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <Upload className="mr-2 h-4 w-4" />
+            )}
+            {t('importData')}
+          </Button>
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileChange}
+            accept=".coinkeeper,.json"
+            className="hidden"
+          />
         </CardContent>
       </Card>
+
+      {/* EXPORT DIALOG */}
+      <Dialog
+        open={isExportOpen}
+        onOpenChange={(isOpen) => {
+          setIsExportOpen(isOpen);
+          if (!isOpen) exportForm.reset();
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('secureExport')}</DialogTitle>
+            <DialogDescription>
+              Enter your master password to encrypt and export your data.
+            </DialogDescription>
+          </DialogHeader>
+          <Form {...exportForm}>
+            <form
+              onSubmit={exportForm.handleSubmit(handleExport)}
+              className="space-y-4 pt-4"
+            >
+              {settings.devMode && (
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="encrypt-switch-main"
+                    checked={shouldEncrypt}
+                    onCheckedChange={setShouldEncrypt}
+                  />
+                  <Label htmlFor="encrypt-switch-main">Encrypt Data</Label>
+                </div>
+              )}
+              {shouldEncrypt && (
+                <FormField
+                  control={exportForm.control}
+                  name="password"
+                  render={({field}) => (
+                    <FormItem>
+                      <FormLabel>{t('masterPassword')}</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            type="password"
+                            placeholder="********"
+                            {...field}
+                            className="pl-10"
+                          />
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {shouldEncrypt ? t('encryptAndExport') : 'Export Unencrypted'}
+              </Button>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+
+      {/* IMPORT DIALOG */}
+      <Dialog
+        open={isImportOpen}
+        onOpenChange={(isOpen) => {
+          setIsImportOpen(isOpen);
+          if (!isOpen) importForm.reset();
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('secureImport')}</DialogTitle>
+            <DialogDescription>
+              {t('secureImportDescription')}
+            </DialogDescription>
+          </DialogHeader>
+          <Form {...importForm}>
+            <form
+              onSubmit={importForm.handleSubmit(handlePasswordImport)}
+              className="space-y-4 pt-4"
+            >
+              <p className="text-sm text-muted-foreground">
+                If importing an unencrypted `.json` file, you can leave the
+                password field blank and click the import button.
+              </p>
+              <FormField
+                control={importForm.control}
+                name="password"
+                render={({field}) => (
+                  <FormItem>
+                    <FormLabel>{t('masterPassword')}</FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          type="password"
+                          placeholder="********"
+                          {...field}
+                          className="pl-10"
+                        />
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {t('decryptAndImport')}
+              </Button>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+
+      {/* SET PASSWORD DIALOG */}
+      <Dialog open={isPasswordFormOpen} onOpenChange={setIsPasswordFormOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('setPassword')}</DialogTitle>
+            <DialogDescription>
+              You must set a master password to export data securely.
+            </DialogDescription>
+          </DialogHeader>
+          <PasswordManager
+            onPasswordSet={() => {
+              setIsPasswordFormOpen(false);
+              setIsExportOpen(true);
+            }}
+          />
+        </DialogContent>
+      </Dialog>
 
       <Card className="border-destructive">
         <CardHeader>
@@ -678,7 +708,7 @@ export function DataManagement({
                 </AlertDialogCancel>
                 <AlertDialogAction
                   onClick={(e) => {
-                    if (settings.user?.passwordHash) e.preventDefault(); // Prevent closing if password needs verification
+                    if (settings.user?.passwordHash) e.preventDefault();
                     handleResetData();
                   }}
                   disabled={isLoading}

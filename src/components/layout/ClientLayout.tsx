@@ -40,6 +40,14 @@ import {
   TooltipTrigger,
 } from '../ui/tooltip';
 import {AutoLockWarning} from './AutoLockWarning';
+import {PasswordManager} from '../settings/PasswordManager';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '../ui/dialog';
 
 function AppHeader() {
   const {isMobile, toggleSidebar} = useSidebar();
@@ -75,19 +83,12 @@ function AppHeader() {
   );
 }
 
-function AppSidebarFooter({
-  handleLock,
-  handleExport,
-  handleImport,
-}: {
-  handleLock: () => void;
-  handleExport: () => void;
-  handleImport: () => void;
-}) {
+function AppSidebarFooter() {
   const pathname = usePathname();
   const {t} = useTranslation();
   const {isMobile, setOpenMobile} = useSidebar();
-  const {setIsPageTransitioning} = useAppContext();
+  const {setIsPageTransitioning, handleLock, handleExport, handleImport} =
+    useAppContext();
   const {settings} = useSettings();
   const isPasswordSet = !!settings.user?.passwordHash;
 
@@ -222,7 +223,7 @@ function AppSidebarFooter({
       </SidebarMenu>
       <SidebarSeparator className="my-1" />
       <div className="flex justify-center items-center gap-1 p-2 group-data-[collapsible=icon]/sidebar:flex-col">
-        {isMobile ? buttons : buttonsWithTooltips}
+        {!isMobile ? buttonsWithTooltips : buttons}
       </div>
     </SidebarFooter>
   );
@@ -238,7 +239,6 @@ function AppSidebarContent() {
 
 function AppLayout({children}: {children: React.ReactNode}) {
   const pathname = usePathname();
-  const {handleLock, handleExport, handleImport} = useAppContext();
   if (pathname === '/') return <>{children}</>;
 
   return (
@@ -254,11 +254,7 @@ function AppLayout({children}: {children: React.ReactNode}) {
             </Link>
           </SidebarHeader>
           <AppSidebarContent />
-          <AppSidebarFooter
-            handleLock={handleLock}
-            handleExport={handleExport}
-            handleImport={handleImport}
-          />
+          <AppSidebarFooter />
         </Sidebar>
         <div className="flex flex-col flex-1 w-full">
           <AppHeader />
@@ -290,6 +286,7 @@ function InnerLayout({children}: {children: React.ReactNode}) {
   const [isLocked, setIsLocked] = useState(false);
 
   const [isExportOpen, setIsExportOpen] = useState(false);
+  const [isPasswordFormOpen, setIsPasswordFormOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const timeout = (settings.user?.autoLockTimeout ?? 0) * 1000;
@@ -329,36 +326,38 @@ function InnerLayout({children}: {children: React.ReactNode}) {
     resetTimers();
   }, [resetTimers]);
 
-  const handleLock = useCallback(() => {
-    if (settings.user?.passwordHash) {
-      setIsLocked(true);
-    }
-  }, [settings.user?.passwordHash]);
-
-  const handleExport = useCallback(() => {
-    setIsExportOpen(true);
-  }, []);
-
-  const handleImport = useCallback(() => {
-    fileInputRef.current?.click();
-  }, []);
-
-  const handleStay = () => {
-    resetTimers();
-  };
-
   useEffect(() => {
+    const handleLock = () => {
+      if (settings.user?.passwordHash) {
+        setIsLocked(true);
+      }
+    };
+
+    const handleExport = () => {
+      if (settings.user?.passwordHash) {
+        setIsExportOpen(true);
+      } else {
+        setIsPasswordFormOpen(true);
+      }
+    };
+
+    const handleImport = () => {
+      fileInputRef.current?.click();
+    };
+
     setHandleLock(() => handleLock);
     setHandleExport(() => handleExport);
     setHandleImport(() => handleImport);
   }, [
-    handleLock,
-    handleExport,
-    handleImport,
+    settings.user?.passwordHash,
     setHandleLock,
     setHandleExport,
     setHandleImport,
   ]);
+
+  const handleStay = () => {
+    resetTimers();
+  };
 
   return (
     <>
@@ -396,6 +395,23 @@ function InnerLayout({children}: {children: React.ReactNode}) {
         importTriggerRef={fileInputRef}
         isTriggered={true}
       />
+
+      <Dialog open={isPasswordFormOpen} onOpenChange={setIsPasswordFormOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Set Master Password</DialogTitle>
+            <DialogDescription>
+              You must set a master password to export data securely.
+            </DialogDescription>
+          </DialogHeader>
+          <PasswordManager
+            onPasswordSet={() => {
+              setIsPasswordFormOpen(false);
+              setIsExportOpen(true);
+            }}
+          />
+        </DialogContent>
+      </Dialog>
 
       <PageTransitionLoader>
         {!isInitialLoading && !isLocked && (
