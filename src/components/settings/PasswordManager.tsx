@@ -4,7 +4,7 @@ import {useState} from "react";
 import {useForm} from "react-hook-form";
 import {zodResolver} from "@hookform/resolvers/zod";
 import {z} from "zod";
-import {KeyRound, Lock, Unlock, AlertTriangle} from "lucide-react";
+import {KeyRound, Lock, Unlock, AlertTriangle, Eye, EyeOff} from "lucide-react";
 
 import {useSettings} from "@/context/SettingsContext";
 import {hashPassword, verifyPassword} from "@/lib/encryption";
@@ -54,10 +54,45 @@ const passwordSchema = z
 
 type PasswordFormValues = z.infer<typeof passwordSchema>;
 
+function PasswordInput({
+  field,
+  placeholder,
+  show,
+  onToggle,
+}: {
+  field: any;
+  placeholder: string;
+  show: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <div className="relative">
+      <Input
+        type={show ? "text" : "password"}
+        {...field}
+        placeholder={placeholder}
+        className="pr-10"
+      />
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
+        className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 text-muted-foreground hover:bg-transparent"
+        onClick={onToggle}
+      >
+        {show ? <EyeOff size={16} /> : <Eye size={16} />}
+      </Button>
+    </div>
+  );
+}
+
 export function PasswordManager() {
   const {settings, updateSettings} = useSettings();
   const {t} = useTranslation();
   const [isFormVisible, setIsFormVisible] = useState(false);
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const isPasswordSet = !!settings.passwordHash;
 
   const form = useForm<PasswordFormValues>({
@@ -79,7 +114,7 @@ export function PasswordManager() {
       if (!isVerified) {
         form.setError("currentPassword", {
           type: "manual",
-          message: "Incorrect current password.",
+          message: t("incorrectCurrentPassword"),
         });
         return;
       }
@@ -92,8 +127,8 @@ export function PasswordManager() {
     });
 
     toast({
-      title: "Master Password Set!",
-      description: "Your application is now password protected.",
+      title: t("passwordSetSuccess"),
+      description: t("passwordSetSuccessDesc"),
     });
     setIsFormVisible(false);
     form.reset();
@@ -102,8 +137,8 @@ export function PasswordManager() {
   const handleRemovePassword = async () => {
     await updateSettings({passwordHash: null, passwordHint: null});
     toast({
-      title: "Master Password Removed",
-      description: "Your application is no longer password protected.",
+      title: t("passwordRemovedSuccess"),
+      description: t("passwordRemovedSuccessDesc"),
     });
     setIsFormVisible(false);
   };
@@ -112,13 +147,8 @@ export function PasswordManager() {
     <Form {...form}>
       <Alert variant="destructive" className="mb-6">
         <AlertTriangle className="h-4 w-4" />
-        <AlertTitle>Important: Password Recovery</AlertTitle>
-        <AlertDescription>
-          This application has no central server. If you forget your master
-          password, it **cannot be recovered**. You will permanently lose access
-          to your data unless you have an unencrypted backup. Please store your
-          password and hint in a safe place.
-        </AlertDescription>
+        <AlertTitle>{t("importantPasswordRecovery")}</AlertTitle>
+        <AlertDescription>{t("passwordRecoveryWarning")}</AlertDescription>
       </Alert>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         {isPasswordSet && (
@@ -127,9 +157,14 @@ export function PasswordManager() {
             name="currentPassword"
             render={({field}) => (
               <FormItem>
-                <FormLabel>Current Password</FormLabel>
+                <FormLabel>{t("currentPassword")}</FormLabel>
                 <FormControl>
-                  <Input type="password" {...field} />
+                  <PasswordInput
+                    field={field}
+                    placeholder="********"
+                    show={showCurrentPassword}
+                    onToggle={() => setShowCurrentPassword((p) => !p)}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -141,9 +176,14 @@ export function PasswordManager() {
           name="newPassword"
           render={({field}) => (
             <FormItem>
-              <FormLabel>New Password</FormLabel>
+              <FormLabel>{t("newPassword")}</FormLabel>
               <FormControl>
-                <Input type="password" {...field} />
+                <PasswordInput
+                  field={field}
+                  placeholder="********"
+                  show={showNewPassword}
+                  onToggle={() => setShowNewPassword((p) => !p)}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -154,9 +194,14 @@ export function PasswordManager() {
           name="confirmPassword"
           render={({field}) => (
             <FormItem>
-              <FormLabel>Confirm New Password</FormLabel>
+              <FormLabel>{t("confirmPassword")}</FormLabel>
               <FormControl>
-                <Input type="password" {...field} />
+                <PasswordInput
+                  field={field}
+                  placeholder="********"
+                  show={showConfirmPassword}
+                  onToggle={() => setShowConfirmPassword((p) => !p)}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -167,9 +212,9 @@ export function PasswordManager() {
           name="passwordHint"
           render={({field}) => (
             <FormItem>
-              <FormLabel>Password Hint (Optional)</FormLabel>
+              <FormLabel>{t("passwordHint")}</FormLabel>
               <FormControl>
-                <Input {...field} placeholder="A hint to help you remember" />
+                <Input {...field} placeholder={t("passwordHintPlaceholder")} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -181,9 +226,9 @@ export function PasswordManager() {
             variant="ghost"
             onClick={() => setIsFormVisible(false)}
           >
-            Cancel
+            {t("cancel")}
           </Button>
-          <Button type="submit">Set Password</Button>
+          <Button type="submit">{t("setPassword")}</Button>
         </div>
       </form>
     </Form>
@@ -192,11 +237,9 @@ export function PasswordManager() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Master Password</CardTitle>
+        <CardTitle>{t("masterPassword")}</CardTitle>
         <CardDescription>
-          {isPasswordSet
-            ? "Your application is password protected. You can change or remove your master password here."
-            : "Set a master password to secure your application. This is optional."}
+          {isPasswordSet ? t("masterPasswordSet") : t("masterPasswordNotSet")}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -210,29 +253,29 @@ export function PasswordManager() {
               ) : (
                 <Lock className="mr-2" />
               )}
-              {isPasswordSet ? "Change Password" : "Set Password"}
+              {isPasswordSet ? t("changePassword") : t("setPassword")}
             </Button>
             {isPasswordSet && (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button variant="destructive">
                     <Unlock className="mr-2" />
-                    Remove Password
+                    {t("removePassword")}
                   </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
                     <AlertDialogTitle>
-                      Are you sure you want to remove the password?
+                      {t("removePasswordConfirmTitle")}
                     </AlertDialogTitle>
                     <AlertDialogDescription>
-                      Your application will no longer be password protected.
+                      {t("removePasswordConfirmDesc")}
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
                     <AlertDialogAction onClick={handleRemovePassword}>
-                      Continue
+                      {t("continue")}
                     </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>

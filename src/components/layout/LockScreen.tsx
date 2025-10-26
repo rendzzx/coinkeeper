@@ -5,7 +5,7 @@ import {useForm} from "react-hook-form";
 import {zodResolver} from "@hookform/resolvers/zod";
 import {z} from "zod";
 import {AnimatePresence, motion} from "framer-motion";
-import {KeyRound, Lightbulb} from "lucide-react";
+import {KeyRound, Lightbulb, Eye, EyeOff} from "lucide-react";
 import {verifyPassword} from "@/lib/encryption";
 import {useTranslation} from "@/hooks/use-translation";
 import {AnimatedLogo} from "../icons/AnimatedLogo";
@@ -53,6 +53,7 @@ export function LockScreen({
 }: LockScreenProps) {
   const {t} = useTranslation();
   const [error, setError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   const form = useForm<LockScreenFormValues>({
     resolver: zodResolver(lockScreenSchema),
@@ -65,7 +66,7 @@ export function LockScreen({
     if (isValid) {
       onUnlock();
     } else {
-      setError("Incorrect password. Please try again.");
+      setError(t("incorrectPassword"));
       form.reset();
     }
   };
@@ -84,11 +85,9 @@ export function LockScreen({
               <AnimatedLogo />
             </div>
             <CardTitle className="text-2xl font-headline">
-              Welcome Back
+              {t("welcomeBack")}
             </CardTitle>
-            <CardDescription>
-              Enter your master password to unlock CoinKeeper.
-            </CardDescription>
+            <CardDescription>{t("unlockAppDescription")}</CardDescription>
           </CardHeader>
           <CardContent>
             <Form {...form}>
@@ -101,16 +100,29 @@ export function LockScreen({
                   name="password"
                   render={({field}) => (
                     <FormItem>
-                      <FormLabel className="sr-only">Password</FormLabel>
+                      <FormLabel className="sr-only">{t("password")}</FormLabel>
                       <FormControl>
                         <div className="relative">
                           <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                           <Input
-                            type="password"
-                            placeholder="Password"
-                            className="pl-10"
+                            type={showPassword ? "text" : "password"}
+                            placeholder={t("password")}
+                            className="pl-10 pr-10"
                             {...field}
                           />
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 text-muted-foreground hover:bg-transparent"
+                            onClick={() => setShowPassword((prev) => !prev)}
+                          >
+                            {showPassword ? (
+                              <EyeOff size={16} />
+                            ) : (
+                              <Eye size={16} />
+                            )}
+                          </Button>
                         </div>
                       </FormControl>
                       <FormMessage />
@@ -123,7 +135,7 @@ export function LockScreen({
                   </p>
                 )}
                 <Button type="submit" className="w-full">
-                  Unlock
+                  {t("unlock")}
                 </Button>
               </form>
             </Form>
@@ -134,7 +146,7 @@ export function LockScreen({
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <p className="text-xs text-muted-foreground cursor-help flex items-center gap-1">
-                      <Lightbulb size={14} /> Password Hint
+                      <Lightbulb size={14} /> {t("passwordHintLabel")}
                     </p>
                   </TooltipTrigger>
                   <TooltipContent>
