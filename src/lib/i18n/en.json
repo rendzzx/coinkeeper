@@ -404,7 +404,16 @@
   "welcomeBack": "Welcome Back",
   "unlockAppDescription": "Enter your master password to unlock CoinKeeper.",
   "unlock": "Unlock",
+  "lock": "Lock",
   "password": "Password",
   "incorrectPassword": "Incorrect password. Please try again.",
-  "passwordHintLabel": "Password Hint"
+  "passwordHintLabel": "Password Hint",
+  "autoLock": "Auto-Lock",
+  "autoLockDescription": "Automatically lock the app after a period of inactivity.",
+  "autoLockTimeout": "Inactivity Timeout",
+  "never": "Never",
+  "minutes": "minutes",
+  "seconds": "seconds",
+  "autoLockWarning": "The app will lock in {{countdown}} seconds due to inactivity.",
+  "stayLoggedIn": "Stay Logged In"
 }

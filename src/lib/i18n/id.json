@@ -404,7 +404,16 @@
   "welcomeBack": "Selamat Datang Kembali",
   "unlockAppDescription": "Masukkan kata sandi utama Anda untuk membuka CoinKeeper.",
   "unlock": "Buka Kunci",
+  "lock": "Kunci",
   "password": "Kata Sandi",
   "incorrectPassword": "Kata sandi salah. Silakan coba lagi.",
-  "passwordHintLabel": "Petunjuk Kata Sandi"
+  "passwordHintLabel": "Petunjuk Kata Sandi",
+  "autoLock": "Kunci Otomatis",
+  "autoLockDescription": "Kunci aplikasi secara otomatis setelah periode tidak aktif.",
+  "autoLockTimeout": "Batas Waktu Tidak Aktif",
+  "never": "Tidak Pernah",
+  "minutes": "menit",
+  "seconds": "detik",
+  "autoLockWarning": "Aplikasi akan terkunci dalam {{countdown}} detik karena tidak aktif.",
+  "stayLoggedIn": "Tetap Masuk"
 }

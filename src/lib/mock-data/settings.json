@@ -19,5 +19,6 @@
     "recentTransactions"
   ],
   "passwordHash": null,
-  "passwordHint": null
+  "passwordHint": null,
+  "autoLockTimeout": 0
 }

@@ -216,6 +216,7 @@ export type AppSettings = {
   toastDuration: number;
   passwordHash: string | null;
   passwordHint: string | null;
+  autoLockTimeout: number; // in seconds. 0 means never.
 };
 
 export type AppState = {
@@ -242,6 +243,12 @@ export type AppContextValue = {
   setIsPageTransitioning: React.Dispatch<React.SetStateAction<boolean>>;
   pageTitle: string;
   setPageTitle: React.Dispatch<React.SetStateAction<string>>;
+  handleLock: () => void;
+  setHandleLock: React.Dispatch<React.SetStateAction<() => void>>;
+  handleExport: () => void;
+  setHandleExport: React.Dispatch<React.SetStateAction<() => void>>;
+  handleImport: () => void;
+  setHandleImport: React.Dispatch<React.SetStateAction<() => void>>;
 };
 
 export type Action =

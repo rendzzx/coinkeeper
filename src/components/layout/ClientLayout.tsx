@@ -1,10 +1,10 @@
 "use client";
 
-import React, {useState, useEffect, useCallback} from "react";
+import React, {useState, useEffect, useCallback, useRef} from "react";
 import {usePathname} from "next/navigation";
 import Link from "next/link";
 import {useTheme} from "next-themes";
-import {Settings, History} from "lucide-react";
+import {Settings, History, Lock, Download, Upload} from "lucide-react";
 
 import {cn} from "@/lib/utils";
 import {Toaster} from "@/components/ui/toaster";
@@ -31,6 +31,15 @@ import {useSettings} from "@/context/SettingsContext";
 import {PageTransitionLoader} from "@/components/layout/PageTransitionLoader";
 import {useAppContext} from "@/context/AppContext";
 import {LockScreen} from "@/components/layout/LockScreen";
+import useIdle from "@/hooks/use-idle";
+import {DataManagement} from "../settings/DataManagement";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "../ui/tooltip";
+import {AutoLockWarning} from "./AutoLockWarning";
 
 function AppHeader() {
   const {isMobile, toggleSidebar} = useSidebar();
@@ -66,25 +75,36 @@ function AppHeader() {
   );
 }
 
-function AppSidebarFooter() {
+function AppSidebarFooter({
+  handleLock,
+  handleExport,
+  handleImport,
+}: {
+  handleLock: () => void;
+  handleExport: () => void;
+  handleImport: () => void;
+}) {
   const pathname = usePathname();
   const {t} = useTranslation();
   const {isMobile, setOpenMobile} = useSidebar();
   const {setIsPageTransitioning} = useAppContext();
+  const {settings} = useSettings();
+  const isPasswordSet = !!settings.passwordHash;
 
   const handleLinkClick = (href: string) => {
     if (isMobile) {
       setOpenMobile(false);
     }
-    // Only show transition if it's a different page
     if (pathname !== href) {
       setIsPageTransitioning(true);
     }
   };
 
+  const iconButtonClass =
+    "h-9 w-9 data-[state=collapsed]:h-9 data-[state=collapsed]:w-9 group-data-[collapsible=icon]/sidebar:h-9 group-data-[collapsible=icon]/sidebar:w-9";
+
   return (
     <SidebarFooter>
-      <SidebarSeparator className="my-2" />
       <SidebarMenu>
         <SidebarMenuItem>
           <SidebarMenuButton
@@ -113,6 +133,60 @@ function AppSidebarFooter() {
           </SidebarMenuButton>
         </SidebarMenuItem>
       </SidebarMenu>
+      <SidebarSeparator className="my-1" />
+      <div className="flex justify-center items-center gap-1 p-2 group-data-[collapsible=icon]/sidebar:flex-col">
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className={iconButtonClass}
+                onClick={handleLock}
+                disabled={!isPasswordSet}
+                aria-label={t("lock")}
+              >
+                <Lock />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="top" align="center">
+              {t("lock")}
+            </TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className={iconButtonClass}
+                onClick={handleExport}
+                aria-label={t("exportData")}
+              >
+                <Download />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="top" align="center">
+              {t("exportData")}
+            </TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className={iconButtonClass}
+                onClick={handleImport}
+                aria-label={t("importData")}
+              >
+                <Upload />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="top" align="center">
+              {t("importData")}
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      </div>
     </SidebarFooter>
   );
 }
@@ -127,6 +201,7 @@ function AppSidebarContent() {
 
 function AppLayout({children}: {children: React.ReactNode}) {
   const pathname = usePathname();
+  const {handleLock, handleExport, handleImport} = useAppContext();
   if (pathname === "/") return <>{children}</>;
 
   return (
@@ -142,7 +217,11 @@ function AppLayout({children}: {children: React.ReactNode}) {
             </Link>
           </SidebarHeader>
           <AppSidebarContent />
-          <AppSidebarFooter />
+          <AppSidebarFooter
+            handleLock={handleLock}
+            handleExport={handleExport}
+            handleImport={handleImport}
+          />
         </Sidebar>
         <div className="flex flex-col flex-1 w-full">
           <AppHeader />
@@ -166,26 +245,30 @@ function ThemeSync() {
   return null;
 }
 
-// InnerLayout now provides the final layout structure and manages loaders.
 function InnerLayout({children}: {children: React.ReactNode}) {
-  const {state, pageTitle} = useAppContext(); // Using context to know when data is ready
+  const {state, pageTitle, setHandleLock, setHandleExport, setHandleImport} =
+    useAppContext();
   const {settings} = useSettings();
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [isLocked, setIsLocked] = useState(false);
 
+  const [isExportOpen, setIsExportOpen] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const timeout = (settings?.autoLockTimeout ?? 0) * 1000;
+  const {isIdle, isPrompting, countdown, resetTimers} = useIdle(timeout, 15000);
+
   useEffect(() => {
-    // Check if the app should be locked on initial load
     if (settings?.passwordHash) {
       setIsLocked(true);
     }
   }, [settings?.passwordHash]);
 
-  // This effect determines if the initial big loading screen should be shown.
   useEffect(() => {
     if (state && state.categories.length > 0) {
       const timer = setTimeout(() => {
         setIsInitialLoading(false);
-      }, 500); // A small delay to prevent flickering
+      }, 500);
       return () => clearTimeout(timer);
     }
   }, [state]);
@@ -198,9 +281,47 @@ function InnerLayout({children}: {children: React.ReactNode}) {
     }
   }, [pageTitle]);
 
+  useEffect(() => {
+    if (isIdle && settings?.passwordHash && !isLocked) {
+      setIsLocked(true);
+    }
+  }, [isIdle, settings?.passwordHash, isLocked]);
+
   const handleUnlock = useCallback(() => {
     setIsLocked(false);
+    resetTimers();
+  }, [resetTimers]);
+
+  const handleLock = useCallback(() => {
+    if (settings?.passwordHash) {
+      setIsLocked(true);
+    }
+  }, [settings?.passwordHash]);
+
+  const handleExport = useCallback(() => {
+    setIsExportOpen(true);
   }, []);
+
+  const handleImport = useCallback(() => {
+    fileInputRef.current?.click();
+  }, []);
+
+  const handleStay = () => {
+    resetTimers();
+  };
+
+  useEffect(() => {
+    setHandleLock(() => handleLock);
+    setHandleExport(() => handleExport);
+    setHandleImport(() => handleImport);
+  }, [
+    handleLock,
+    handleExport,
+    handleImport,
+    setHandleLock,
+    setHandleExport,
+    setHandleImport,
+  ]);
 
   return (
     <>
@@ -220,6 +341,24 @@ function InnerLayout({children}: {children: React.ReactNode}) {
           onUnlock={handleUnlock}
         />
       )}
+
+      {!isInitialLoading &&
+        !isLocked &&
+        settings?.passwordHash &&
+        timeout > 0 && (
+          <AutoLockWarning
+            isOpen={isPrompting}
+            countdown={countdown}
+            onStay={handleStay}
+          />
+        )}
+
+      <DataManagement
+        isExportOpen={isExportOpen}
+        setIsExportOpen={setIsExportOpen}
+        importTriggerRef={fileInputRef}
+        isTriggered={true}
+      />
 
       <PageTransitionLoader>
         {!isInitialLoading && !isLocked && (

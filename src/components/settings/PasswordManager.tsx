@@ -4,7 +4,15 @@ import {useState} from "react";
 import {useForm} from "react-hook-form";
 import {zodResolver} from "@hookform/resolvers/zod";
 import {z} from "zod";
-import {KeyRound, Lock, Unlock, AlertTriangle, Eye, EyeOff} from "lucide-react";
+import {
+  KeyRound,
+  Lock,
+  Unlock,
+  AlertTriangle,
+  Eye,
+  EyeOff,
+  Timer,
+} from "lucide-react";
 
 import {useSettings} from "@/context/SettingsContext";
 import {hashPassword, verifyPassword} from "@/lib/encryption";
@@ -36,6 +44,14 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
+import {Separator} from "../ui/separator";
 
 const passwordSchema = z
   .object({
@@ -85,6 +101,48 @@ function PasswordInput({
         {show ? <EyeOff size={16} /> : <Eye size={16} />}
       </Button>
     </div>
+  );
+}
+
+function AutoLockCard() {
+  const {settings, updateSettings} = useSettings();
+  const {t} = useTranslation();
+
+  const handleTimeoutChange = (value: string) => {
+    updateSettings({autoLockTimeout: Number(value)});
+  };
+
+  if (!settings.passwordHash) return null;
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>{t("autoLock")}</CardTitle>
+        <CardDescription>{t("autoLockDescription")}</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="w-full max-w-sm">
+          <Select
+            value={String(settings.autoLockTimeout)}
+            onValueChange={handleTimeoutChange}
+          >
+            <SelectTrigger>
+              <Timer className="mr-2" />
+              <SelectValue placeholder={t("selectTimeout")} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="0">{t("never")}</SelectItem>
+              <SelectItem value="30">30 {t("seconds")}</SelectItem>
+              <SelectItem value="300">5 {t("minutes")}</SelectItem>
+              <SelectItem value="600">10 {t("minutes")}</SelectItem>
+              <SelectItem value="900">15 {t("minutes")}</SelectItem>
+              <SelectItem value="1800">30 {t("minutes")}</SelectItem>
+              <SelectItem value="3600">60 {t("minutes")}</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -156,7 +214,11 @@ export function PasswordManager() {
       return;
     }
 
-    await updateSettings({passwordHash: null, passwordHint: null});
+    await updateSettings({
+      passwordHash: null,
+      passwordHint: null,
+      autoLockTimeout: 0,
+    });
     toast({
       title: t("passwordRemovedSuccess"),
       description: t("passwordRemovedSuccessDesc"),
@@ -257,90 +319,96 @@ export function PasswordManager() {
   );
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{t("masterPassword")}</CardTitle>
-        <CardDescription>
-          {isPasswordSet ? t("masterPasswordSet") : t("masterPasswordNotSet")}
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        {isFormVisible ? (
-          formContent
-        ) : (
-          <div className="flex gap-2">
-            <Button onClick={() => setIsFormVisible(true)}>
-              {isPasswordSet ? (
-                <KeyRound className="mr-2" />
-              ) : (
-                <Lock className="mr-2" />
-              )}
-              {isPasswordSet ? t("changePassword") : t("setPassword")}
-            </Button>
-            {isPasswordSet && (
-              <Dialog
-                open={isRemoveConfirmOpen}
-                onOpenChange={setIsRemoveConfirmOpen}
-              >
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>{t("removePasswordConfirmTitle")}</DialogTitle>
-                    <DialogDescription>
-                      {t("removePasswordConfirmDesc")}
-                    </DialogDescription>
-                  </DialogHeader>
-                  <Form {...removeForm}>
-                    <form
-                      onSubmit={removeForm.handleSubmit(handleRemovePassword)}
-                      className="space-y-4"
-                    >
-                      <FormField
-                        control={removeForm.control}
-                        name="password"
-                        render={({field}) => (
-                          <FormItem>
-                            <FormLabel>{t("currentPassword")}</FormLabel>
-                            <FormControl>
-                              <PasswordInput
-                                field={field}
-                                placeholder="********"
-                                show={showRemovePassword}
-                                onToggle={() =>
-                                  setShowRemovePassword((p) => !p)
-                                }
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <DialogFooter>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          onClick={() => setIsRemoveConfirmOpen(false)}
-                        >
-                          {t("cancel")}
-                        </Button>
-                        <Button type="submit" variant="destructive">
-                          {t("removePassword")}
-                        </Button>
-                      </DialogFooter>
-                    </form>
-                  </Form>
-                </DialogContent>
-                <Button
-                  variant="destructive"
-                  onClick={() => setIsRemoveConfirmOpen(true)}
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>{t("masterPassword")}</CardTitle>
+          <CardDescription>
+            {isPasswordSet ? t("masterPasswordSet") : t("masterPasswordNotSet")}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {isFormVisible ? (
+            formContent
+          ) : (
+            <div className="flex gap-2">
+              <Button onClick={() => setIsFormVisible(true)}>
+                {isPasswordSet ? (
+                  <KeyRound className="mr-2" />
+                ) : (
+                  <Lock className="mr-2" />
+                )}
+                {isPasswordSet ? t("changePassword") : t("setPassword")}
+              </Button>
+              {isPasswordSet && (
+                <Dialog
+                  open={isRemoveConfirmOpen}
+                  onOpenChange={setIsRemoveConfirmOpen}
                 >
-                  <Unlock className="mr-2" />
-                  {t("removePassword")}
-                </Button>
-              </Dialog>
-            )}
-          </div>
-        )}
-      </CardContent>
-    </Card>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>
+                        {t("removePasswordConfirmTitle")}
+                      </DialogTitle>
+                      <DialogDescription>
+                        {t("removePasswordConfirmDesc")}
+                      </DialogDescription>
+                    </DialogHeader>
+                    <Form {...removeForm}>
+                      <form
+                        onSubmit={removeForm.handleSubmit(handleRemovePassword)}
+                        className="space-y-4"
+                      >
+                        <FormField
+                          control={removeForm.control}
+                          name="password"
+                          render={({field}) => (
+                            <FormItem>
+                              <FormLabel>{t("currentPassword")}</FormLabel>
+                              <FormControl>
+                                <PasswordInput
+                                  field={field}
+                                  placeholder="********"
+                                  show={showRemovePassword}
+                                  onToggle={() =>
+                                    setShowRemovePassword((p) => !p)
+                                  }
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <DialogFooter>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            onClick={() => setIsRemoveConfirmOpen(false)}
+                          >
+                            {t("cancel")}
+                          </Button>
+                          <Button type="submit" variant="destructive">
+                            {t("removePassword")}
+                          </Button>
+                        </DialogFooter>
+                      </form>
+                    </Form>
+                  </DialogContent>
+                  <Button
+                    variant="destructive"
+                    onClick={() => setIsRemoveConfirmOpen(true)}
+                  >
+                    <Unlock className="mr-2" />
+                    {t("removePassword")}
+                  </Button>
+                </Dialog>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <AutoLockCard />
+    </div>
   );
 }
